@@ -1,0 +1,79 @@
+<pre class='metadata'>
+Title: Loosen complexity guarantees for `std::lower_bound()`
+Shortname: Pxxxx
+Revision: 0
+Status: NP
+Date: 2024-01-22
+Group: WG21
+Audience: SG9, LWG
+Editor: Iuri Chaer, iuri.chaer@gmail.com
+!Source: [ichaer/cpp-proposals](https://github.com/ichaer/cpp-proposals/blob/master/src/lower_bound-complexity.bs)
+Markup Shorthands: markdown on
+Abstract: This is a proposal for loosening algorithmic complexity guarantees for `std::lower_bound()` to allow innovation.
+</pre>
+
+Introduction {#intro}
+=======================
+
+The current complexity guarantee `std::lower_bound()` states (27.8.4.2 [lower.bound] of [[!N4950]]):
+
+<blockquote>
+*Complexity*: At most log₂(last - first) + 𝒪(1) comparisons and projections.
+</blockquote>
+
+That complexity guarantee, as it stands, effectivelly enforces the use of classic binary search to implement the function. However, for non-random-access iterators the requirement of pre-computing the length of the iterator range to be able to run that algorithm means that the effective complexity is given by:
+
+<blockquote>
+log₂(last - first) + 2*(last - first)-1
+</blockquote>
+
+With the algorithmic complexity being dominated by iterator mutations, the current wording in the standard is ineffective in guaranteeing its performance, while at the same time being too strict to allow innovation -- it would be valuable to decrease the multiplier of the linear factor, namely the number of iterator mutations, even if it meant having a larger constant multiplier for the logarithmic factor (ie the number of comparisons and projections).
+
+
+Motivation and scope {#motivation-and-scope}
+============================================
+
+There is scope for improvement of `std::lower_bound()` for non-random-access iterators independent of any specific algorithm. However, this proposal is being triggered by an attempt to introduce in LLVM's libc++ implementation of the standard library [[Chaer1]] the use of one-sided binary search, as documented in [Skiena1], to obtain a modest improvement to worst-case scenario complexity, and a much more radical improvement to the best-case complexity: while classic binary search offers us a strong *log₂(N)* bound on the number of comparisons and *2\*N - 1* iterator mutations, one-sided binary search requires anything between *1* and *2\*log₂(N) - 1* comparisons, with the number of iterator mutations ranging between *1* and *1.5\*N - 1*.
+
+
+Implementation experience {#implementation-experience}
+======================================================
+
+The algorithm being proposed is in use in closed-source software, and is part of a code change submission to LLVM's libc++ implementation of the standard library [[Chaer1]].
+
+
+Proposed wording {#proposed-wording}
+====================================
+
+The proposed changes are relative to the working draft of the standard as of [[!N4950]].
+
+Modify the complexity guarantee in 27.8.4.2 [lower.bound] as follows:
+
+<blockquote>
+*Complexity*: At most log₂(last - first) + 𝒪(1) comparisons and projections<ins> when invoked with random-access iterators. For all other iterator types, at most 𝒪(last - first) comparisons and projections and 𝒪(last - first) iterator mutations</ins>.
+</blockquote>
+
+
+Future work {#future-work}
+==========================
+
+One-sided binary search is interesting enough to stand on its own, and it would be worthwhile considering exposing it independently in the standard library so that it can be used for all iterator types, and so that developers can rely on the very different complexity characteristics it offers.
+
+
+<pre class=biblio>
+{
+    "Skiena1": {
+        "authors": ["Steven S. Skiena"],
+        "title": "The Algorithm Design Manual",
+        "publisher": "Springer",
+        "type": "Book",
+        "chapter": "4.9.2"
+    },
+    "Chaer1": {
+        "authors": ["Iuri Chaer"],
+        "href": "https://github.com/llvm/llvm-project/pull/75230",
+        "title": "Pull Request: [libc++] Introduce one-sided binary search for lower_bound on non-random iterators",
+        "publisher": "LLVM Project"
+    }
+}
+</pre>
