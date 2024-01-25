@@ -1563,6 +1563,7 @@ Possible extra rowspan handling
   </style>
   <meta content="Bikeshed version 4416b18d5, updated Tue Jan 2 15:52:39 2024 -0800" name="generator">
   <link href="https://isocpp.org/favicon.ico" rel="icon">
+  <meta content="1138e32157eb16ceff2d2e15abe7817be75a881c" name="revision">
 <style>/* Boilerplate: style-autolinks */
 .css.css, .property.property, .descriptor.descriptor {
     color: var(--a-normal-text);
@@ -2127,12 +2128,210 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
    <p>The current complexity guarantee <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>lower_bound</c-><c- p>()</c-></code> states (27.8.4.2 [lower.bound] of <a data-link-type="biblio" href="#biblio-n4950" title="Working Draft, Standard for Programming Language C++">[N4950]</a>):</p>
    <blockquote> <em>Complexity</em>: At most log₂(last - first) + 𝒪(1) comparisons and projections. </blockquote>
    <p>That complexity guarantee, as it stands, effectivelly enforces the use of classic binary search to implement the function. However, for non-random-access iterators the requirement of pre-computing the length of the iterator range to be able to run that algorithm means that the effective complexity is given by:</p>
-   <blockquote> log₂(last - first) + 2*(last - first)-1 </blockquote>
+   <blockquote>
+    <math alttext="\theta = log_2(last - first) + 2 \times (last - first)" display="inline">
+     <mrow>
+      <mi>Θ</mi>
+      <mo>=</mo>
+      <msub>
+       <mi>log</mi>
+       <mrow>
+        <mn>2</mn>
+       </mrow>
+      </msub>
+      <mo>(</mo>
+      <mi>last</mi>
+      <mo>-</mo>
+      <mi>first</mi>
+      <mo>)</mo>
+      <mo>+</mo>
+      <mn>2</mn>
+      <mo>×</mo>
+      <mo>(</mo>
+      <mi>last</mi>
+      <mo>-</mo>
+      <mi>first</mi>
+      <mo>)</mo>
+     </mrow>
+    </math>
+   </blockquote>
    <p>With the algorithmic complexity being dominated by iterator mutations, the current wording in the standard is ineffective in guaranteeing its performance, while at the same time being too strict to allow innovation -- it would be valuable to decrease the multiplier of the linear factor, namely the number of iterator mutations, even if it meant having a larger constant multiplier for the logarithmic factor (ie the number of comparisons and projections).</p>
    <h2 class="heading settled" data-level="2" id="motivation-and-scope"><span class="secno">2. </span><span class="content">Motivation and scope</span><a class="self-link" href="#motivation-and-scope"></a></h2>
-   <p>There is scope for improvement of <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>lower_bound</c-><c- p>()</c-></code> for non-random-access iterators independent of any specific algorithm. However, this proposal is being triggered by an attempt to introduce in LLVM’s libc++ implementation of the standard library <a data-link-type="biblio" href="#biblio-chaer1" title="Pull Request: [libc++] Introduce one-sided binary search for lower_bound on non-random iterators">[Chaer1]</a> the use of one-sided binary search, as documented in [Skiena1], to obtain a modest improvement to worst-case scenario complexity, and a much more radical improvement to the best-case complexity: while classic binary search offers us a strong <em>log₂(N)</em> bound on the number of comparisons and <em>2*N - 1</em> iterator mutations, one-sided binary search requires anything between <em>1</em> and <em>2*log₂(N) - 1</em> comparisons, with the number of iterator mutations ranging between <em>1</em> and <em>1.5*N - 1</em>.</p>
+   <p>There is scope for improvement of <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>lower_bound</c-><c- p>()</c-></code> for non-random-access iterators independent of any specific algorithm. However, this proposal is being triggered by an attempt to introduce in LLVM’s libc++ implementation of the standard library <a data-link-type="biblio" href="#biblio-chaer1" title="Pull Request: [libc++] Introduce one-sided binary search for lower_bound on non-random iterators">[Chaer1]</a> the use of one-sided binary search, as documented in <a data-link-type="biblio" href="#biblio-skiena1" title="The Algorithm Design Manual">[Skiena1]</a>, to obtain a modest improvement to worst-case scenario complexity, and a much more radical improvement to the best-case complexity. Classic binary search offers us a strong <em>Θ = log₂(N)</em> bound on the number of comparisons and <em>Θ = 2 × N</em> iterator mutations, while the algorithmic complexity of one-sided binary search is given by:</p>
+   <blockquote>
+    <math alttext="\mathcal{O} = 2 \times \log_2(N) - 1" display="inline">
+     <mrow>
+      <mi>𝒪</mi>
+      <mo>=</mo>
+      <mn>2</mn>
+      <mo>×</mo>
+      <msub>
+       <mi>log</mi>
+       <mrow>
+        <mn>2</mn>
+       </mrow>
+      </msub>
+      <mo>(</mo>
+      <mi>N</mi>
+      <mo>)</mo>
+      <mo>-</mo>
+      <mn>1</mn>
+     </mrow>
+    </math>
+     <br> 
+    <math alttext="\omega = 1" display="inline">
+     <mrow>
+      <mi>Ω</mi>
+      <mo>=</mo>
+      <mn>1</mn>
+     </mrow>
+    </math>
+   </blockquote>
    <h2 class="heading settled" data-level="3" id="implementation-experience"><span class="secno">3. </span><span class="content">Implementation experience</span><a class="self-link" href="#implementation-experience"></a></h2>
    <p>The algorithm being proposed is in use in closed-source software, and is part of a code change submission to LLVM’s libc++ implementation of the standard library <a data-link-type="biblio" href="#biblio-chaer1" title="Pull Request: [libc++] Introduce one-sided binary search for lower_bound on non-random iterators">[Chaer1]</a>.</p>
+   <p>The closed-source software in question is Splunk, and the change has been in use in production systems since August 2023, and it has resolved serious scalability issues with a component which layers a large number of <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>set</c-></code>s on top of each other, triggering expensive computation on the intersection. The specific scenario consists of one set growing as multiple sets are merged into it, such that most operations are between one very large set and one that is much smaller. The performance impact is what would be expected when changing from linear to logarithmic complexity: the layering of <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>set</c-></code>s is no longer a bottleneck.</p>
+   <p>The submission to LLVM’s libc++ originally consisted of a change to <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>lower_bound</c-><c- p>()</c-></code>, which would use one-sided binary search for non-random-access iterators, and the use of one-sided binary search in <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>set_intersection</c-><c- p>()</c-></code> for all iterator types. The first part of the change was rejected because it would violate the standard library’s algorithmic complexity guarantee for <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>lower_bound</c-><c- p>()</c-></code> (and is why this proposal is being submitted). The second part, however, doesn’t violate any guarantees and, as of now, still stands. The libc++ library currently implements the classic <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>set_intersection</c-><c- p>()</c-></code> algorithm, which linearly scans both iterator ranges in parallel, incrementing one or the other (or both) as each element is found not to be less than the other. The complexity of the classic algorithm is, in all cases:</p>
+   <blockquote>
+    <math alttext="Comparisons = 2 \times ((last1 - first1) + (last2 - first2)) - 1" display="inline">
+     <mrow>
+      <mi>Comparisons</mi>
+      <mo>=</mo>
+      <mn>2</mn>
+      <mo>×</mo>
+      <mo>(</mo>
+      <mo>(</mo>
+      <mi>last1</mi>
+      <mo>-</mo>
+      <mi>first1</mi>
+      <mo>)</mo>
+      <mo>+</mo>
+      <mo>(</mo>
+      <mi>last2</mi>
+      <mo>-</mo>
+      <mi>first2</mi>
+      <mo>)</mo>
+      <mo>)</mo>
+      <mo>-</mo>
+      <mn>1</mn>
+     </mrow>
+    </math>
+     <br> 
+    <math alttext="Iterator mutations = (last1 - first1) + (last2 - first2)" display="inline">
+     <mrow>
+      <mi>Iterator mutations</mi>
+      <mo>=</mo>
+      <mo>(</mo>
+      <mi>last1</mi>
+      <mo>-</mo>
+      <mi>first1</mi>
+      <mo>)</mo>
+      <mo>+</mo>
+      <mo>(</mo>
+      <mi>last2</mi>
+      <mo>-</mo>
+      <mi>first2</mi>
+      <mo>)</mo>
+     </mrow>
+    </math>
+   </blockquote>
+   <p>The version using one-sided binary search, however, has different best-case and worst-case complexity. In the worst case, which happens when the less-than operator keeps switching values when comparing consecutive elements from the input ranges, such that there is no opportunity to enjoy the benefits from the binary search:</p>
+   <blockquote>
+    <math alttext="Comparisons = 2 \times ((last1 - first1) + (last2 - first2)) - 1" display="inline">
+     <mrow>
+      <mi>Comparisons</mi>
+      <mo>=</mo>
+      <mn>2</mn>
+      <mo>×</mo>
+      <mo>(</mo>
+      <mo>(</mo>
+      <mi>last1</mi>
+      <mo>-</mo>
+      <mi>first1</mi>
+      <mo>)</mo>
+      <mo>+</mo>
+      <mo>(</mo>
+      <mi>last2</mi>
+      <mo>-</mo>
+      <mi>first2</mi>
+      <mo>)</mo>
+      <mo>)</mo>
+      <mo>-</mo>
+      <mn>1</mn>
+     </mrow>
+    </math>
+     <br> 
+    <math alttext="Iterator mutations = 1.5 \times ((last1 - first1) + (last2 - first2)) - 1" display="inline">
+     <mrow>
+      <mi>Iterator mutations</mi>
+      <mo>=</mo>
+      <mn>1.5</mn>
+      <mo>×</mo>
+      <mo>(</mo>
+      <mo>(</mo>
+      <mi>last1</mi>
+      <mo>-</mo>
+      <mi>first1</mi>
+      <mo>)</mo>
+      <mo>+</mo>
+      <mo>(</mo>
+      <mi>last2</mi>
+      <mo>-</mo>
+      <mi>first2</mi>
+      <mo>)</mo>
+      <mo>)</mo>
+     </mrow>
+    </math>
+   </blockquote>
+   <p>That worst-case complexity can be easily derived from a more complex equation, which depends on the sizes of the ranges on which the benefits from one-sided binary search can be observed:</p>
+   <blockquote>
+    <math alttext="Comparisons = \overset{n}{\underset{i=0}{\sum}}\log_{2}(len_{i})" display="inline">
+     <mrow>
+      <mi>Comparisons</mi>
+      <mo>=</mo>
+      <munderover accent="true" accentunder="true">
+       <mo largeop="true" symmetric="true">∑</mo>
+       <mrow>
+        <mi>i</mi>
+        <mo>=</mo>
+        <mn>2</mn>
+       </mrow>
+       <mrow>
+        <mi>n</mi>
+       </mrow>
+      </munderover>
+      <mo>(</mo>
+      <mn>2</mn>
+      <mo>×</mo>
+      <mo>⌈</mo>
+      <msub>
+       <mi>log</mi>
+       <mrow>
+        <mn>2</mn>
+       </mrow>
+      </msub>
+      <mo>(</mo>
+      <mrow>
+       <msub>
+        <mi>len</mi>
+        <mrow>
+         <mi>i</mi>
+        </mrow>
+       </msub>
+      </mrow>
+      <mo>+</mo>
+      <mn>1</mn>
+      <mo>)</mo>
+      <mo>⌉</mo>
+      <mo>-</mo>
+      <mn>1</mn>
+      <mo>)</mo>
+     </mrow>
+    </math>
+     <br> <i>Where len<sub>i</sub> is the length of the </i>i<i>th longest consecutive range from either input which cannot be extended, preserving its ordering, by inserting an element from the other range within its bounds.</i> 
+   </blockquote>
+   <p>From this equation we can also observe that, although the number of comparisons in the worst-case scenario matches the classic algorithm, all other scenarios have sublinear algorithmic complexity in that regard.</p>
+   <p>The number of iterator mutations follows a similar equation for random-access iterators, multiplied by a factor of <em>1.5</em>, making the overall algorithm’s complexity sublinear for a wide range of inputs.</p>
+   <p>While all of this is interesting in the context of <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>set_intersection</c-><c- p>()</c-></code>, it’s important to keep in mind that this proposal is for a change to <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>lower_bound</c-><c- p>()</c-></code>’s complexity guarantees: it’s not even thinkable to use classic binary search in this context. While there is certainly room for discussing the tradeoffs in using one-sided binary search in <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>set_intersection</c-><c- p>()</c-></code>, the algorithm is powerful enough to change the range of viable applications for <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>lower_bound</c-><c- p>()</c-></code>.</p>
    <h2 class="heading settled" data-level="4" id="proposed-wording"><span class="secno">4. </span><span class="content">Proposed wording</span><a class="self-link" href="#proposed-wording"></a></h2>
    <p>The proposed changes are relative to the working draft of the standard as of <a data-link-type="biblio" href="#biblio-n4950" title="Working Draft, Standard for Programming Language C++">[N4950]</a>.</p>
    <p>Modify the complexity guarantee in 27.8.4.2 [lower.bound] as follows:</p>
@@ -2283,4 +2482,6 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
   <dl>
    <dt id="biblio-chaer1">[Chaer1]
    <dd>Iuri Chaer. <a href="https://github.com/llvm/llvm-project/pull/75230"><cite>Pull Request: [libc++] Introduce one-sided binary search for lower_bound on non-random iterators</cite></a>. URL: <a href="https://github.com/llvm/llvm-project/pull/75230">https://github.com/llvm/llvm-project/pull/75230</a>
+   <dt id="biblio-skiena1">[Skiena1]
+   <dd>Steven S. Skiena. <cite>The Algorithm Design Manual</cite>. 
   </dl>
