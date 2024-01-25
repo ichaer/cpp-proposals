@@ -9,7 +9,7 @@ Audience: SG9, LWG
 Editor: Iuri Chaer, iuri.chaer@gmail.com
 !Source: [ichaer/cpp-proposals](https://github.com/ichaer/cpp-proposals/blob/master/src/lower_bound-complexity.bs)
 Markup Shorthands: markdown on
-Abstract: This is a proposal for loosening algorithmic complexity guarantees for `std::lower_bound()` to allow innovation.
+Abstract: Loosen algorithmic complexity guarantees for `std::lower_bound()` to allow innovation.
 </pre>
 
 Introduction {#intro}
