@@ -1563,7 +1563,7 @@ Possible extra rowspan handling
   </style>
   <meta content="Bikeshed version 4416b18d5, updated Tue Jan 2 15:52:39 2024 -0800" name="generator">
   <link href="https://isocpp.org/favicon.ico" rel="icon">
-  <meta content="0a9a107abd82535ae6b245b16c28b38c51e7eac8" name="revision">
+  <meta content="ab3f1a38ca83e4bde7fe7a4bca2adb3ee5441513" name="revision">
 <style>/* Boilerplate: style-autolinks */
 .css.css, .property.property, .descriptor.descriptor {
     color: var(--a-normal-text);
@@ -2112,7 +2112,12 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
    <ol class="toc" role="directory">
     <li><a href="#intro"><span class="secno">1</span> <span class="content">Introduction</span></a>
     <li><a href="#motivation-and-scope"><span class="secno">2</span> <span class="content">Motivation and scope</span></a>
-    <li><a href="#implementation-experience"><span class="secno">3</span> <span class="content">Implementation experience</span></a>
+    <li>
+     <a href="#implementation-experience"><span class="secno">3</span> <span class="content">Implementation experience</span></a>
+     <ol class="toc">
+      <li><a href="#set_intersection"><span class="secno">3.1</span> <span class="content">Use in <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>set_intersection</c-><c- p>()</c-></code></span></a>
+      <li><a href="#lower_bound_bench"><span class="secno">3.2</span> <span class="content">Experimental use of one-sided binary search in <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>lower_bound</c-><c- p>()</c-></code></span></a>
+     </ol>
     <li><a href="#proposed-wording"><span class="secno">4</span> <span class="content">Proposed wording</span></a>
     <li><a href="#future-work"><span class="secno">5</span> <span class="content">Future work</span></a>
     <li>
@@ -2129,7 +2134,7 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
    <blockquote> <em>Complexity</em>: At most log₂(last - first) + 𝒪(1) comparisons and projections. </blockquote>
    <p>That complexity guarantee, as it stands, effectivelly enforces the use of classic binary search to implement the function. However, for non-random-access iterators the requirement of pre-computing the length of the iterator range to be able to run that algorithm means that the effective complexity is given by:</p>
    <blockquote>
-    <math alttext="\theta = log_2(last - first) + 2 \times (last - first)" display="inline">
+    <math alttext="\theta = log_2(N) \times comparison\_cost + 2 \times N \times iteration\_cost" display="inline">
      <mrow>
       <mi>Θ</mi>
       <mo>=</mo>
@@ -2139,27 +2144,23 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
         <mn>2</mn>
        </mrow>
       </msub>
-      <mo>(</mo>
-      <mi>last</mi>
-      <mo>-</mo>
-      <mi>first</mi>
-      <mo>)</mo>
+      <mi>N</mi>
+      <mo>×</mo>
+      <mi>comparison_cost</mi>
       <mo>+</mo>
       <mn>2</mn>
       <mo>×</mo>
-      <mo>(</mo>
-      <mi>last</mi>
-      <mo>-</mo>
-      <mi>first</mi>
-      <mo>)</mo>
+      <mi>N</mi>
+      <mo>×</mo>
+      <mi>iteration_cost</mi>
      </mrow>
     </math>
    </blockquote>
    <p>With the algorithmic complexity being dominated by iterator mutations, the current wording in the standard is ineffective in guaranteeing its performance, while at the same time being too strict to allow innovation -- it would be valuable to decrease the multiplier of the linear factor, namely the number of iterator mutations, even if it meant having a larger constant multiplier for the logarithmic factor (ie the number of comparisons and projections).</p>
    <h2 class="heading settled" data-level="2" id="motivation-and-scope"><span class="secno">2. </span><span class="content">Motivation and scope</span><a class="self-link" href="#motivation-and-scope"></a></h2>
-   <p>There is scope for improvement of <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>lower_bound</c-><c- p>()</c-></code> for non-random-access iterators independent of any specific algorithm. However, this proposal is being triggered by an attempt to introduce in LLVM’s libc++ implementation of the standard library <a data-link-type="biblio" href="#biblio-chaer1" title="Pull Request: [libc++] Introduce one-sided binary search for lower_bound on non-random iterators">[Chaer1]</a> the use of one-sided binary search, as documented in <a data-link-type="biblio" href="#biblio-skiena1" title="The Algorithm Design Manual">[Skiena1]</a>, to obtain a modest improvement to worst-case scenario complexity, and a much more radical improvement to the best-case complexity. Classic binary search offers us a strong <em>Θ = log₂(N)</em> bound on the number of comparisons and <em>Θ = 2 × N</em> iterator mutations, while the algorithmic complexity of one-sided binary search is given by:</p>
+   <p>There is scope for improvement of <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>lower_bound</c-><c- p>()</c-></code> for non-random-access iterators independent of any specific algorithm. However, this proposal is being triggered by an attempt to introduce in LLVM’s libc++ implementation of the standard library <a data-link-type="biblio" href="#biblio-chaer1" title="Pull Request: [libc++] Introduce one-sided binary search for set_intersection so that it can be completed in sub-linear time for a large class of inputs.">[Chaer1]</a> the use of one-sided binary search, as documented in <a data-link-type="biblio" href="#biblio-skiena1" title="The Algorithm Design Manual">[Skiena1]</a>, to obtain a modest improvement to worst-case scenario complexity, and a much more radical improvement to the best-case complexity. Classic binary search offers us a strong <em>Θ = log₂(N)</em> bound on the number of comparisons and <em>Θ = 2 × N</em> iterator mutations, while the algorithmic complexity of one-sided binary search is given by:</p>
    <blockquote>
-    <math alttext="\mathcal{O} = 2 \times \log_2(N) - 1" display="inline">
+    <math alttext="\mathcal{O} = 2 \times \log_2(N) \times comparison\_cost + N \times iteration\_cost" display="inline">
      <mrow>
       <mi>𝒪</mi>
       <mo>=</mo>
@@ -2171,11 +2172,13 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
         <mn>2</mn>
        </mrow>
       </msub>
-      <mo>(</mo>
       <mi>N</mi>
-      <mo>)</mo>
-      <mo>-</mo>
-      <mn>1</mn>
+      <mo>×</mo>
+      <mi>comparison_cost</mi>
+      <mo>+</mo>
+      <mi>N</mi>
+      <mo>×</mo>
+      <mi>iteration_cost</mi>
      </mrow>
     </math>
      <br> 
@@ -2187,10 +2190,13 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
      </mrow>
     </math>
    </blockquote>
+   <p>In the worst-case scenario the algorithm’s complexity is linear, which is unavoidable for non-random-access iterators, but with a much gentler slope than classic binary search. The number of comparisons grows logarithmically, just like with classic binary search, but in this case with a constant multiplicative factor of <em>2</em>, meaning that, although one-sided binary search unambiguously scales better than the classic version, it may be more expensive than the latter when the number of elements in a container is small relative to the cost of comparing them.</p>
    <h2 class="heading settled" data-level="3" id="implementation-experience"><span class="secno">3. </span><span class="content">Implementation experience</span><a class="self-link" href="#implementation-experience"></a></h2>
-   <p>The algorithm being proposed is in use in closed-source software, and is part of a code change submission to LLVM’s libc++ implementation of the standard library <a data-link-type="biblio" href="#biblio-chaer1" title="Pull Request: [libc++] Introduce one-sided binary search for lower_bound on non-random iterators">[Chaer1]</a>.</p>
+   <p>The algorithm being proposed is in use in closed-source software, and is part of a code change submission to LLVM’s libc++ implementation of the standard library <a data-link-type="biblio" href="#biblio-chaer1" title="Pull Request: [libc++] Introduce one-sided binary search for set_intersection so that it can be completed in sub-linear time for a large class of inputs.">[Chaer1]</a>.</p>
    <p>The closed-source software in question is Splunk, and the change has been in use in production systems since August 2023, and it has resolved serious scalability issues with a component which layers a large number of <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>set</c-></code>s on top of each other, triggering expensive computation on the intersection. The specific scenario consists of one set growing as multiple sets are merged into it, such that most operations are between one very large set and one that is much smaller. The performance impact is what would be expected when changing from linear to logarithmic complexity: the layering of <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>set</c-></code>s is no longer a bottleneck.</p>
-   <p>The submission to LLVM’s libc++ originally consisted of a change to <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>lower_bound</c-><c- p>()</c-></code>, which would use one-sided binary search for non-random-access iterators, and the use of one-sided binary search in <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>set_intersection</c-><c- p>()</c-></code> for all iterator types. The first part of the change was rejected because it would violate the standard library’s algorithmic complexity guarantee for <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>lower_bound</c-><c- p>()</c-></code> (and is why this proposal is being submitted). The second part, however, doesn’t violate any guarantees and, as of now, still stands. The libc++ library currently implements the classic <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>set_intersection</c-><c- p>()</c-></code> algorithm, which linearly scans both iterator ranges in parallel, incrementing one or the other (or both) as each element is found not to be less than the other. The complexity of the classic algorithm is, in all cases:</p>
+   <p>The submission to LLVM’s libc++ originally consisted of a change to <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>lower_bound</c-><c- p>()</c-></code>, which would use one-sided binary search for non-random-access iterators, and the use of one-sided binary search in <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>set_intersection</c-><c- p>()</c-></code> for all iterator types. The first part of the change was rejected because it would violate the standard library’s algorithmic complexity guarantee for <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>lower_bound</c-><c- p>()</c-></code> (and is why this proposal is being submitted). The second part, however, doesn’t violate any guarantees and, as of now, still stands.</p>
+   <h3 class="heading settled" data-level="3.1" id="set_intersection"><span class="secno">3.1. </span><span class="content">Use in <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>set_intersection</c-><c- p>()</c-></code></span><a class="self-link" href="#set_intersection"></a></h3>
+   <p>The libc++ library currently implements the classic <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>set_intersection</c-><c- p>()</c-></code> algorithm, which linearly scans both iterator ranges in parallel, incrementing one or the other (or both) as each element is found not to be less than the other. The complexity of the classic algorithm is, in all cases:</p>
    <blockquote>
     <math alttext="Comparisons = 2 \times ((last1 - first1) + (last2 - first2)) - 1" display="inline">
      <mrow>
@@ -2332,6 +2338,281 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
    <p>From this equation we can also observe that, although the number of comparisons in the worst-case scenario matches the classic algorithm, all other scenarios have sublinear algorithmic complexity in that regard.</p>
    <p>The number of iterator mutations follows a similar equation for random-access iterators, multiplied by a factor of <em>1.5</em>, making the overall algorithm’s complexity sublinear for a wide range of inputs.</p>
    <p>While all of this is interesting in the context of <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>set_intersection</c-><c- p>()</c-></code>, it’s important to keep in mind that this proposal is for a change to <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>lower_bound</c-><c- p>()</c-></code>’s complexity guarantees: it’s not even thinkable to use classic binary search in this context. While there is certainly room for discussing the tradeoffs in using one-sided binary search in <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>set_intersection</c-><c- p>()</c-></code>, the algorithm is powerful enough to change the range of viable applications for <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>lower_bound</c-><c- p>()</c-></code>.</p>
+   <h3 class="heading settled" data-level="3.2" id="lower_bound_bench"><span class="secno">3.2. </span><span class="content">Experimental use of one-sided binary search in <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>lower_bound</c-><c- p>()</c-></code></span><a class="self-link" href="#lower_bound_bench"></a></h3>
+   <p>The original libc++ library change proposal is preserved in <a data-link-type="biblio" href="#biblio-chaer2" title="Pull Request: Use one-sided binary search for lower_bound on non-random iterators.">[Chaer2]</a>, and the existing <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>lower_bound</c-><c- p>()</c-></code> benchmark program from the LLVM repository was modified to demonstrate its impact. CPU time was measured for <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>lower_bound</c-><c- p>()</c-></code> locating elements from <code class="highlight"><c- nl>std</c-><c- p>:</c-><c- n>set</c-></code>s with 6 different value types, and of 8 different sizes in the [1, 2<sup>18</sup>] range. All tests were executed on a "11th Gen Intel(R) Core(TM) i7-11850H @ 2.50GHz" CPU with its auto-scaling functionality disabled.</p>
+   <table style="border:none;">
+    <tbody>
+     <tr>
+      <td style="border:none;"><img alt="Time vs. size graph for std::set<uint32_t>" height="298px" src="lower_bound_uint32.svg" width="482px">
+      <td style="border:none;"><img alt="Time vs. size graph for std::set<uint64_t>" height="298px" src="lower_bound_uint64.svg" width="482px">
+     <tr>
+      <td style="border:none;"><img alt="Time vs. size graph for std::set<float>" height="298px" src="lower_bound_float.svg" width="482px">
+      <td style="border:none;"><img alt="Time vs. size graph for std::set<pair<uint32_t, uint32_t>>" height="298px" src="lower_bound_pair.svg" width="482px">
+     <tr>
+      <td style="border:none;"><img alt="Time vs. size graph for std::set<std::set<tuple<uint32_t, uint64_t, uint32_t>>>" height="298px" src="lower_bound_tuple.svg" width="482px">
+      <td style="border:none;"><img alt="Time vs. size graph for std::set<std::string>" height="298px" src="lower_bound_string.svg" width="482px">
+   </table>
+   <details>
+    <summary>Raw data</summary>
+    <table>
+     <thead>
+      <tr>
+       <th colspan="2">
+       <th colspan="2">Time (ns)
+      <tr>
+       <th rowspan="2">Type
+       <th rowspan="2">Size
+       <th>Classic
+       <th>One-sided
+     <tbody>
+      <tr>
+       <td>name&lt;cpu_time>
+       <td>time_unit
+       <td>
+       <td>
+      <tr>
+       <td>std::set&lt;float>
+       <td>1
+       <td>157.841033935583
+       <td>155.150051117167
+      <tr>
+       <td>std::set&lt;float>
+       <td>4
+       <td>225.52050781255
+       <td>219.645721435627
+      <tr>
+       <td>std::set&lt;float>
+       <td>16
+       <td>645.258483886769
+       <td>590.656616210927
+      <tr>
+       <td>std::set&lt;float>
+       <td>64
+       <td>2123.96801757812
+       <td>1946.63037109374
+      <tr>
+       <td>std::set&lt;float>
+       <td>256
+       <td>7883.3388671875
+       <td>6882.17089843746
+      <tr>
+       <td>std::set&lt;float>
+       <td>1024
+       <td>31574.7265624999
+       <td>27090.3281250001
+      <tr>
+       <td>std::set&lt;float>
+       <td>16384
+       <td>645827.625000001
+       <td>507287.500000001
+      <tr>
+       <td>std::set&lt;float>
+       <td>262144
+       <td>15195462.4375
+       <td>9071708.81249999
+      <tr>
+       <td>std::set&lt;std::pair&lt;uint32_t, uint32_t>>
+       <td>1
+       <td>162.188838958799
+       <td>161.847568511872
+      <tr>
+       <td>std::set&lt;std::pair&lt;uint32_t, uint32_t>>
+       <td>4
+       <td>260.938751220734
+       <td>271.034957885762
+      <tr>
+       <td>std::set&lt;std::pair&lt;uint32_t, uint32_t>>
+       <td>16
+       <td>616.962158203104
+       <td>581.088989257781
+      <tr>
+       <td>std::set&lt;std::pair&lt;uint32_t, uint32_t>>
+       <td>64
+       <td>2171.63232421878
+       <td>1806.88525390623
+      <tr>
+       <td>std::set&lt;std::pair&lt;uint32_t, uint32_t>>
+       <td>256
+       <td>7746.10937500001
+       <td>6673.02050781253
+      <tr>
+       <td>std::set&lt;std::pair&lt;uint32_t, uint32_t>>
+       <td>1024
+       <td>31003.2031250001
+       <td>25712.8437500001
+      <tr>
+       <td>std::set&lt;std::pair&lt;uint32_t, uint32_t>>
+       <td>16384
+       <td>642202.5
+       <td>530180.8125
+      <tr>
+       <td>std::set&lt;std::pair&lt;uint32_t, uint32_t>>
+       <td>262144
+       <td>15409862
+       <td>10871770.6875
+      <tr>
+       <td>std::set&lt;std::string>
+       <td>1
+       <td>197.436843872118
+       <td>197.073902130046
+      <tr>
+       <td>std::set&lt;std::string>
+       <td>4
+       <td>313.590896606468
+       <td>270.086929321417
+      <tr>
+       <td>std::set&lt;std::string>
+       <td>16
+       <td>724.393310546954
+       <td>665.274780273511
+      <tr>
+       <td>std::set&lt;std::string>
+       <td>64
+       <td>2438.77050781245
+       <td>2219.0539550783
+      <tr>
+       <td>std::set&lt;std::string>
+       <td>256
+       <td>9282.77441406229
+       <td>8338.58984375021
+      <tr>
+       <td>std::set&lt;std::string>
+       <td>1024
+       <td>41040.6757812514
+       <td>35348.5781250006
+      <tr>
+       <td>std::set&lt;std::string>
+       <td>16384
+       <td>921738.374999998
+       <td>859987.124999995
+      <tr>
+       <td>std::set&lt;std::string>
+       <td>262144
+       <td>43657717.4999999
+       <td>39776752.7500001
+      <tr>
+       <td>std::set&lt;std::tuple&lt;uint32_t, uint64_t, uint32_t>>
+       <td>1
+       <td>182.622070312649
+       <td>177.043598175048
+      <tr>
+       <td>std::set&lt;std::tuple&lt;uint32_t, uint64_t, uint32_t>>
+       <td>4
+       <td>224.463363647458
+       <td>219.369308471706
+      <tr>
+       <td>std::set&lt;std::tuple&lt;uint32_t, uint64_t, uint32_t>>
+       <td>16
+       <td>658.733215331987
+       <td>630.211730957027
+      <tr>
+       <td>std::set&lt;std::tuple&lt;uint32_t, uint64_t, uint32_t>>
+       <td>64
+       <td>2129.89941406248
+       <td>1873.48974609375
+      <tr>
+       <td>std::set&lt;std::tuple&lt;uint32_t, uint64_t, uint32_t>>
+       <td>256
+       <td>7906.57714843747
+       <td>6883.60253906256
+      <tr>
+       <td>std::set&lt;std::tuple&lt;uint32_t, uint64_t, uint32_t>>
+       <td>1024
+       <td>33145.0390625002
+       <td>27847.89453125
+      <tr>
+       <td>std::set&lt;std::tuple&lt;uint32_t, uint64_t, uint32_t>>
+       <td>16384
+       <td>671663.4375
+       <td>515817.9375
+      <tr>
+       <td>std::set&lt;std::tuple&lt;uint32_t, uint64_t, uint32_t>>
+       <td>262144
+       <td>24468278.0625
+       <td>11235433
+      <tr>
+       <td>std::set&lt;uint32_t>
+       <td>1
+       <td>179.178524017321
+       <td>195.396003723181
+      <tr>
+       <td>std::set&lt;uint32_t>
+       <td>4
+       <td>231.760955810497
+       <td>226.139038086014
+      <tr>
+       <td>std::set&lt;uint32_t>
+       <td>16
+       <td>639.681213378884
+       <td>566.204895019543
+      <tr>
+       <td>std::set&lt;uint32_t>
+       <td>64
+       <td>2113.84741210939
+       <td>1813.38891601566
+      <tr>
+       <td>std::set&lt;uint32_t>
+       <td>256
+       <td>7884.30859375006
+       <td>6674.29492187507
+      <tr>
+       <td>std::set&lt;uint32_t>
+       <td>1024
+       <td>31406.90625
+       <td>26385.5859375
+      <tr>
+       <td>std::set&lt;uint32_t>
+       <td>16384
+       <td>635306.562499999
+       <td>476300.249999999
+      <tr>
+       <td>std::set&lt;uint32_t>
+       <td>262144
+       <td>15404765.0625
+       <td>8844881.8125
+      <tr>
+       <td>std::set&lt;uint64_t>
+       <td>1
+       <td>193.389709472601
+       <td>189.393211364809
+      <tr>
+       <td>std::set&lt;uint64_t>
+       <td>4
+       <td>224.608291626161
+       <td>217.471572875998
+      <tr>
+       <td>std::set&lt;uint64_t>
+       <td>16
+       <td>629.315612793026
+       <td>575.697875976568
+      <tr>
+       <td>std::set&lt;uint64_t>
+       <td>64
+       <td>2039.05761718751
+       <td>1796.75268554687
+      <tr>
+       <td>std::set&lt;uint64_t>
+       <td>256
+       <td>7781.46777343752
+       <td>6572.19628906252
+      <tr>
+       <td>std::set&lt;uint64_t>
+       <td>1024
+       <td>30737.58984375
+       <td>27896.6562499998
+      <tr>
+       <td>std::set&lt;uint64_t>
+       <td>16384
+       <td>641660.5625
+       <td>472708.875
+      <tr>
+       <td>std::set&lt;uint64_t>
+       <td>262144
+       <td>15515018.625
+       <td>10473658.125
+    </table>
+   </details>
+   <p>Nearly all graphs show increasing divergence between the original version, implementing classic binary search, and the one using one-sided binary search, consistent with the expectation from the slope change for the most relevant factor of the algorithmic complexity. The notable exception is <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>set</c-><c- o>&lt;</c-><c- n>std</c-><c- o>::</c-><c- n>string</c-><c- o>></c-></code>, where comparisons are much more expensive, and loading string contents from memory has a complex interaction with CPU cache contents, giving the time vs. size curves for both algorithms a less linear aspect than for the other types, with the one-sided binary search algorithm following almost parallel to the classic algorithm, albeit always faster. The speedup for the simpler types is satisfyingly close to the <em>2x</em> improvement predicted.</p>
    <h2 class="heading settled" data-level="4" id="proposed-wording"><span class="secno">4. </span><span class="content">Proposed wording</span><a class="self-link" href="#proposed-wording"></a></h2>
    <p>The proposed changes are relative to the working draft of the standard as of <a data-link-type="biblio" href="#biblio-n4950" title="Working Draft, Standard for Programming Language C++">[N4950]</a>.</p>
    <p>Modify the complexity guarantee in 27.8.4.2 [lower.bound] as follows:</p>
@@ -2481,7 +2762,9 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
   <h3 class="no-num no-ref heading settled" id="informative"><span class="content">Informative References</span><a class="self-link" href="#informative"></a></h3>
   <dl>
    <dt id="biblio-chaer1">[Chaer1]
-   <dd>Iuri Chaer. <a href="https://github.com/llvm/llvm-project/pull/75230"><cite>Pull Request: [libc++] Introduce one-sided binary search for lower_bound on non-random iterators</cite></a>. URL: <a href="https://github.com/llvm/llvm-project/pull/75230">https://github.com/llvm/llvm-project/pull/75230</a>
+   <dd>Iuri Chaer. <a href="https://github.com/llvm/llvm-project/pull/75230"><cite>Pull Request: [libc++] Introduce one-sided binary search for set_intersection so that it can be completed in sub-linear time for a large class of inputs.</cite></a>. URL: <a href="https://github.com/llvm/llvm-project/pull/75230">https://github.com/llvm/llvm-project/pull/75230</a>
+   <dt id="biblio-chaer2">[Chaer2]
+   <dd>Iuri Chaer. <a href="https://github.com/ichaer/llvm-project-onesided_lower_bound/pull/1"><cite>Pull Request: Use one-sided binary search for lower_bound on non-random iterators.</cite></a>. URL: <a href="https://github.com/ichaer/llvm-project-onesided_lower_bound/pull/1">https://github.com/ichaer/llvm-project-onesided_lower_bound/pull/1</a>
    <dt id="biblio-skiena1">[Skiena1]
    <dd>Steven S. Skiena. <cite>The Algorithm Design Manual</cite>. 
   </dl>
