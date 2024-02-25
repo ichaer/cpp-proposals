@@ -296,13 +296,13 @@ One-sided binary search is interesting enough to stand on its own, and it would 
     "Chaer1": {
         "authors": ["Iuri Chaer"],
         "href": "https://github.com/llvm/llvm-project/pull/75230",
-        "title": "Pull Request: [libc++] Introduce one-sided binary search for set_intersection so that it can be completed in sub-linear time for a large class of inputs.",
+        "title": "Pull Request: [libc++] Introduce one-sided binary search for set_intersection so that it can be completed in sub-linear time for a large class of inputs",
         "publisher": "LLVM Project"
     },
     "Chaer2": {
         "authors": ["Iuri Chaer"],
         "href": "https://github.com/ichaer/llvm-project-onesided_lower_bound/pull/1",
-        "title": "Pull Request: Use one-sided binary search for lower_bound on non-random iterators."
+        "title": "Pull Request: Use one-sided binary search for lower_bound on non-random iterators"
     }
 }
 </pre>
