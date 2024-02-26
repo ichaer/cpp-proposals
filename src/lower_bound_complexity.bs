@@ -281,7 +281,7 @@ Modify the complexity guarantee in 27.8.4.2 [lower.bound] as follows:
 Future work {#future-work}
 ==========================
 
-One-sided binary search is interesting enough to stand on its own, and it would be worthwhile considering exposing it independently in the standard library so that it can be used for all iterator types, and so that developers can rely on the very different complexity characteristics it offers.
+One-sided binary search is interesting enough to stand on its own, and it would be worthwhile considering exposing it independently in the standard library so that it can be used for all iterator types, and that developers can rely on the very different complexity characteristics it offers.
 
 
 <pre class=biblio>
