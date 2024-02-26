@@ -263,7 +263,7 @@ The original libc++ library change proposal is preserved in [[Chaer2]], and the 
 </table>
 </details>
 
-Nearly all graphs show increasing divergence between the original version, implementing classic binary search, and the one using one-sided binary search, consistent with the expectation from the slope change for the most relevant factor of the algorithmic complexity. The notable exception is `std::set<std::string>`, where comparisons are much more expensive, and loading string contents from memory has a complex interaction with CPU cache contents, giving the time vs. size curves for both algorithms a less linear aspect than for the other types, with the one-sided binary search algorithm following almost parallel to the classic algorithm, albeit always faster. The speedup for the simpler types is satisfyingly close to the *2x* improvement predicted.
+Nearly all graphs show increasing divergence between the original version, implementing classic binary search, and the one using one-sided binary search, consistent with the expectation from the slope change for the most relevant factor of the algorithmic complexity. The notable exception is `std::set<std::string>`, where comparisons are much more expensive, and loading string contents from memory has a complex interaction with CPU cache contents, giving the time vs. size curves for both algorithms a less linear aspect than for the other types, with the one-sided binary search algorithm following almost parallel to the classic algorithm, albeit consistently faster. The speedup for the simpler types is satisfyingly close to the *2x* improvement predicted.
 
 
 Proposed wording {#proposed-wording}
