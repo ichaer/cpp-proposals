@@ -38,13 +38,13 @@ That complexity guarantee, as it stands, effectivelly enforces the use of classi
 </blockquote>
 
 
-With the algorithmic complexity being dominated by iterator mutations, the current wording in the standard is ineffective in guaranteeing its performance, while at the same time being too strict to allow innovation -- it would be valuable to decrease the multiplier of the linear factor, namely the number of iterator mutations, even if it meant having a larger constant multiplier for the logarithmic factor (ie the number of comparisons and projections).
+With the algorithmic complexity being dominated by iterator mutations, the current wording in the standard is ineffective in guaranteeing its performance, while at the same time being too strict to allow innovation &mdash; it would be valuable to decrease the multiplier of the linear factor, namely the number of iterator mutations, even if it meant having a larger constant multiplier for the logarithmic factor (ie the number of comparisons and projections).
 
 
 Motivation and scope {#motivation-and-scope}
 ============================================
 
-There is scope for improvement of `std::lower_bound()` for non-random-access iterators independent of any specific algorithm. However, this proposal is being triggered by an attempt to introduce in LLVM's libc++ implementation of the standard library [[Chaer1]] the use of one-sided binary search, as documented in [[Skiena1]], to obtain a modest improvement to worst-case scenario complexity, and a much more radical improvement to the best-case complexity. Classic binary search offers us a strong *Θ = log₂(N)* bound on the number of comparisons and *Θ = 2 × N* iterator mutations, while the algorithmic complexity of one-sided binary search is given by:
+There is scope for improvement of `std::lower_bound()`'s complexity guarantees for non-random-access iterators independent of any specific algorithm proposals. However, the motivation for this paper is an attempt to introduce in LLVM's libc++ implementation of the standard library [[Chaer1]] the use of one-sided binary search, as documented in [[Skiena1]], to obtain a modest improvement to worst-case scenario complexity, and a much more radical improvement to the best-case complexity. Classic binary search offers us a strong *Θ = log₂(N)* bound on the number of comparisons and *Θ = 2 × N* iterator mutations, while the algorithmic complexity of one-sided binary search is given by:
 
 <blockquote>
 <math display="inline" alttext="\mathcal{O} = 2 \times \log_2(N) \times comparison\_cost + N \times iteration\_cost">
@@ -68,7 +68,7 @@ There is scope for improvement of `std::lower_bound()` for non-random-access ite
 </blockquote>
 
 
-In the worst-case scenario the algorithm's complexity is linear, which is unavoidable for non-random-access iterators, but with a much gentler slope than classic binary search. The number of comparisons grows logarithmically, just like with classic binary search, but in this case with a constant multiplicative factor of *2*, meaning that, although one-sided binary search unambiguously scales better than the classic version, it may be more expensive than the latter when the number of elements in a container is small relative to the cost of comparing them.
+In the worst-case scenario the algorithm's complexity presents linear growth with the input size, which is unavoidable for non-random-access iterators, but with a much gentler slope than classic binary search. The number of comparisons grows logarithmically, just like with classic binary search, but in this case with a constant multiplicative factor of *2*, meaning that, although one-sided binary search unambiguously scales better than the classic version, it may be more expensive than the latter when the number of elements in a container is small relative to the cost of comparing them. Implementation-specific time measurements are presented in the next section.
 
 
 Implementation experience {#implementation-experience}
@@ -76,7 +76,7 @@ Implementation experience {#implementation-experience}
 
 The algorithm being proposed is in use in closed-source software, and is part of a code change submission to LLVM's libc++ implementation of the standard library [[Chaer1]].
 
-The closed-source software in question is Splunk, and the change has been in use in production systems since August 2023, and it has resolved serious scalability issues with a component which layers a large number of `std::set`s on top of each other, triggering expensive computation on the intersection. The specific scenario consists of one set growing as multiple sets are merged into it, such that most operations are between one very large set and one that is much smaller. The performance impact is what would be expected when changing from linear to logarithmic complexity: the layering of `std::set`s is no longer a bottleneck.
+The closed-source software in question is Splunk, the change has been in use in production systems since August 2023, and it has resolved serious scalability issues with a component which layers a large number of `std::set`s on top of each other, triggering expensive computation on the intersection. The specific scenario consists of one set growing as multiple sets are merged into it, such that most operations are between one very large set and one that is much smaller. The performance impact is what would be expected when changing from linear to logarithmic complexity: the layering of `std::set`s is no longer a bottleneck.
 
 The submission to LLVM's libc++ originally consisted of a change to `std::lower_bound()`, which would use one-sided binary search for non-random-access iterators, and the use of one-sided binary search in `std::set_intersection()` for all iterator types. The first part of the change was rejected because it would violate the standard library's algorithmic complexity guarantee for `std::lower_bound()` (and is why this proposal is being submitted). The second part, however, doesn't violate any guarantees and, as of now, still stands.
 
