@@ -1563,7 +1563,7 @@ Possible extra rowspan handling
   </style>
   <meta content="Bikeshed version 4416b18d5, updated Tue Jan 2 15:52:39 2024 -0800" name="generator">
   <link href="https://isocpp.org/favicon.ico" rel="icon">
-  <meta content="80140b381a83470749e5aaa85a7de513c9112a21" name="revision">
+  <meta content="5e921860c8ee59d5325bda272512d70c644977ad" name="revision">
 <style>/* Boilerplate: style-autolinks */
 .css.css, .property.property, .descriptor.descriptor {
     color: var(--a-normal-text);
@@ -2612,7 +2612,7 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
        <td>10473658.125
     </table>
    </details>
-   <p>Nearly all graphs show increasing divergence between the original version, implementing classic binary search, and the one using one-sided binary search, consistent with the expectation from the slope change for the most relevant factor of the algorithmic complexity. The notable exception is <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>set</c-><c- o>&lt;</c-><c- n>std</c-><c- o>::</c-><c- n>string</c-><c- o>></c-></code>, where comparisons are much more expensive, and loading string contents from memory has a complex interaction with CPU cache contents, giving the time vs. size curves for both algorithms a less linear aspect than for the other types, with the one-sided binary search algorithm following almost parallel to the classic algorithm, albeit always faster. The speedup for the simpler types is satisfyingly close to the <em>2x</em> improvement predicted.</p>
+   <p>Nearly all graphs show increasing divergence between the original version, implementing classic binary search, and the one using one-sided binary search, consistent with the expectation from the slope change for the most relevant factor of the algorithmic complexity. The notable exception is <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>set</c-><c- o>&lt;</c-><c- n>std</c-><c- o>::</c-><c- n>string</c-><c- o>></c-></code>, where comparisons are much more expensive, and loading string contents from memory has a complex interaction with CPU cache contents, giving the time vs. size curves for both algorithms a less linear aspect than for the other types, with the one-sided binary search algorithm following almost parallel to the classic algorithm, albeit consistently faster. The speedup for the simpler types is satisfyingly close to the <em>2x</em> improvement predicted.</p>
    <h2 class="heading settled" data-level="4" id="proposed-wording"><span class="secno">4. </span><span class="content">Proposed wording</span><a class="self-link" href="#proposed-wording"></a></h2>
    <p>The proposed changes are relative to the working draft of the standard as of <a data-link-type="biblio" href="#biblio-n4950" title="Working Draft, Standard for Programming Language C++">[N4950]</a>.</p>
    <p>Modify the complexity guarantee in 27.8.4.2 [lower.bound] as follows:</p>
