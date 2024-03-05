@@ -61,7 +61,7 @@ In the worst-case scenario the overall number of steps required for one-sided bi
 Implementation experience {#implementation-experience}
 ======================================================
 
-The algorithm being proposed is in use in closed-source software, and is part of a code change submission to LLVM's libc++ implementation of the standard library [[Chaer1]].
+The use of one-sided binary search in `std::lower_bound()` for non-random-access iterators is in use in closed-source software, and is part of a code change submission to LLVM's libc++ implementation of the standard library [[Chaer1]].
 
 The closed-source software in question is Splunk, the change has been in use in production systems since August 2023, and it has resolved serious scalability issues with a component which layers a large number of `std::set`s on top of each other, triggering expensive computation on the intersection. The specific scenario consists of one set growing as multiple sets are merged into it, such that most operations are between one very large set and one that is much smaller. The performance impact is what would be expected when changing from linear to logarithmic complexity: the layering of `std::set`s is no longer a bottleneck.
 
