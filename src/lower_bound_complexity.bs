@@ -43,7 +43,7 @@ With the algorithmic complexity being dominated by iterator mutations, the curre
 Motivation and scope {#motivation-and-scope}
 ============================================
 
-There is scope for improvement of `std::lower_bound()`'s complexity guarantees for non-random-access iterators independent of any specific algorithm proposals. However, the motivation for this paper is an attempt to introduce in LLVM's libc++ implementation of the standard library [[Chaer1]] the use of one-sided binary search, as documented in [[Skiena1]], to obtain a modest improvement to worst-case scenario complexity, and a much more radical improvement to the best-case complexity:
+There is scope for improvement of `std::lower_bound()`'s complexity guarantees for non-random-access iterators independent of any specific algorithm proposals. However, the motivation for this paper is an attempt to introduce in LLVM's libc++ implementation of the standard library [[Chaer1]] the use of one-sided binary search, as documented in [[Skiena1]], to obtain a modest improvement in worst-case scenario complexity, and a much more radical improvement to the best-case complexity:
 <table>
 <thead>
 <tr><th></th><th colspan=2>Best case</th><th colspan=2>Worst case</th></tr>
@@ -55,7 +55,7 @@ There is scope for improvement of `std::lower_bound()`'s complexity guarantees f
 </tbody>
 </table>
 
-In the worst-case scenario the algorithm's complexity presents linear growth with the input size, which is unavoidable for non-random-access iterators, but with a much gentler slope than classic binary search. The number of comparisons grows logarithmically, just like with classic binary search, but in this case with a constant multiplicative factor of *2*, meaning that, although one-sided binary search unambiguously scales better than the classic version, it may be more expensive than the latter when the number of elements in a container is small relative to the cost of comparing them. Implementation-specific time measurements are presented in the next section.
+In the worst-case scenario the overall number of steps required for one-sided binary search grows linearly with the input size, which is unavoidable for non-random-access iterators, but the growth rate is half of that presented by classic binary search. The number of comparisons grows logarithmically, just like with classic binary search, but with a constant multiplicative factor of *2*, meaning that, although one-sided binary search unambiguously scales better than the classic version, it may be more expensive than the latter when the number of elements in a container is small relative to the cost of comparing them. Implementation-specific time measurements are presented in the next section.
 
 
 Implementation experience {#implementation-experience}
