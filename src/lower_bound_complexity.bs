@@ -26,7 +26,6 @@ That complexity guarantee, as it stands, effectively enforces the use of classic
 <blockquote>
 <math display="inline" alttext="\theta = log_2(N) \times comparison\_cost + 2 \times N \times iteration\_cost">
     <mrow>
-        <mi>Θ</mi><mo>=</mo>
         <msub><mi>log</mi><mrow><mn>2</mn></mrow></msub><mi>N</mi>
         <mo>×</mo><mi>comparison_cost</mi>
         <mo>+</mo>
@@ -44,29 +43,17 @@ With the algorithmic complexity being dominated by iterator mutations, the curre
 Motivation and scope {#motivation-and-scope}
 ============================================
 
-There is scope for improvement of `std::lower_bound()`'s complexity guarantees for non-random-access iterators independent of any specific algorithm proposals. However, the motivation for this paper is an attempt to introduce in LLVM's libc++ implementation of the standard library [[Chaer1]] the use of one-sided binary search, as documented in [[Skiena1]], to obtain a modest improvement to worst-case scenario complexity, and a much more radical improvement to the best-case complexity. Classic binary search offers us a strong *Θ = log₂(N)* bound on the number of comparisons and *Θ = 2 × N* iterator mutations, while the algorithmic complexity of one-sided binary search is given by:
-
-<blockquote>
-<math display="inline" alttext="\mathcal{O} = 2 \times \log_2(N) \times comparison\_cost + N \times iteration\_cost">
-    <mrow>
-        <mi>𝒪</mi><mo>=</mo>
-        <mn>2</mn>
-        <mo>×</mo>
-        <msub><mi>log</mi><mrow><mn>2</mn></mrow></msub><mi>N</mi>
-        <mo>×</mo><mi>comparison_cost</mi>
-        <mo>+</mo>
-        <mi>N</mi><mo>×</mo><mi>iteration_cost</mi>
-    </mrow>
-</math>
-<br/>
-<math display="inline" alttext="\omega = 1">
-    <mrow>
-        <mi>Ω</mi><mo>=</mo>
-        <mn>1</mn>
-    </mrow>
-</math>
-</blockquote>
-
+There is scope for improvement of `std::lower_bound()`'s complexity guarantees for non-random-access iterators independent of any specific algorithm proposals. However, the motivation for this paper is an attempt to introduce in LLVM's libc++ implementation of the standard library [[Chaer1]] the use of one-sided binary search, as documented in [[Skiena1]], to obtain a modest improvement to worst-case scenario complexity, and a much more radical improvement to the best-case complexity:
+<table>
+<thead>
+<tr><th></th><th colspan=2>Best case</th><th colspan=2>Worst case</th></tr>
+<tr><th rowspan=2>Algorithm</th><th>Comparisons</th><th>Iterations</th><th>Comparisons</th><th>Iterations</th></tr>
+</thead>
+<tbody>
+<tr><td>Classic</td><td>*log₂(N)*</td><td>*2 × N*</td><td>*log₂(N)*</td><td>*2 × N*</td></tr>
+<tr><td>One-sided</td><td>*1*</td><td>*1*</td><td>*2×log₂(N)*</td><td>*N*</td></tr>
+</tbody>
+</table>
 
 In the worst-case scenario the algorithm's complexity presents linear growth with the input size, which is unavoidable for non-random-access iterators, but with a much gentler slope than classic binary search. The number of comparisons grows logarithmically, just like with classic binary search, but in this case with a constant multiplicative factor of *2*, meaning that, although one-sided binary search unambiguously scales better than the classic version, it may be more expensive than the latter when the number of elements in a container is small relative to the cost of comparing them. Implementation-specific time measurements are presented in the next section.
 

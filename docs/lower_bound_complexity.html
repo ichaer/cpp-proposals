@@ -1563,7 +1563,7 @@ Possible extra rowspan handling
   </style>
   <meta content="Bikeshed version 4416b18d5, updated Tue Jan 2 15:52:39 2024 -0800" name="generator">
   <link href="https://isocpp.org/favicon.ico" rel="icon">
-  <meta content="c85ede8bfc93ac23f20cab9f0676f7a155e6f04b" name="revision">
+  <meta content="1fe9acb1e8e141add1590772e4f2e3e5a2c00e18" name="revision">
 <style>/* Boilerplate: style-autolinks */
 .css.css, .property.property, .descriptor.descriptor {
     color: var(--a-normal-text);
@@ -2136,8 +2136,6 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
    <blockquote>
     <math alttext="\theta = log_2(N) \times comparison\_cost + 2 \times N \times iteration\_cost" display="inline">
      <mrow>
-      <mi>Θ</mi>
-      <mo>=</mo>
       <msub>
        <mi>log</mi>
        <mrow>
@@ -2158,38 +2156,33 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
    </blockquote>
    <p>With the algorithmic complexity being dominated by iterator mutations, the current wording in the standard is ineffective in guaranteeing its performance, while at the same time being too strict to allow innovation — it would be valuable to decrease the multiplier of the linear factor, namely the number of iterator mutations, even if it meant having a larger constant multiplier for the logarithmic factor (ie the number of comparisons and projections).</p>
    <h2 class="heading settled" data-level="2" id="motivation-and-scope"><span class="secno">2. </span><span class="content">Motivation and scope</span><a class="self-link" href="#motivation-and-scope"></a></h2>
-   <p>There is scope for improvement of <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>lower_bound</c-><c- p>()</c-></code>’s complexity guarantees for non-random-access iterators independent of any specific algorithm proposals. However, the motivation for this paper is an attempt to introduce in LLVM’s libc++ implementation of the standard library <a data-link-type="biblio" href="#biblio-chaer1" title="Pull Request: [libc++] Introduce one-sided binary search for set_intersection so that it can be completed in sub-linear time for a large class of inputs">[Chaer1]</a> the use of one-sided binary search, as documented in <a data-link-type="biblio" href="#biblio-skiena1" title="The Algorithm Design Manual">[Skiena1]</a>, to obtain a modest improvement to worst-case scenario complexity, and a much more radical improvement to the best-case complexity. Classic binary search offers us a strong <em>Θ = log₂(N)</em> bound on the number of comparisons and <em>Θ = 2 × N</em> iterator mutations, while the algorithmic complexity of one-sided binary search is given by:</p>
-   <blockquote>
-    <math alttext="\mathcal{O} = 2 \times \log_2(N) \times comparison\_cost + N \times iteration\_cost" display="inline">
-     <mrow>
-      <mi>𝒪</mi>
-      <mo>=</mo>
-      <mn>2</mn>
-      <mo>×</mo>
-      <msub>
-       <mi>log</mi>
-       <mrow>
-        <mn>2</mn>
-       </mrow>
-      </msub>
-      <mi>N</mi>
-      <mo>×</mo>
-      <mi>comparison_cost</mi>
-      <mo>+</mo>
-      <mi>N</mi>
-      <mo>×</mo>
-      <mi>iteration_cost</mi>
-     </mrow>
-    </math>
-     <br> 
-    <math alttext="\omega = 1" display="inline">
-     <mrow>
-      <mi>Ω</mi>
-      <mo>=</mo>
-      <mn>1</mn>
-     </mrow>
-    </math>
-   </blockquote>
+   <p>There is scope for improvement of <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>lower_bound</c-><c- p>()</c-></code>’s complexity guarantees for non-random-access iterators independent of any specific algorithm proposals. However, the motivation for this paper is an attempt to introduce in LLVM’s libc++ implementation of the standard library <a data-link-type="biblio" href="#biblio-chaer1" title="Pull Request: [libc++] Introduce one-sided binary search for set_intersection so that it can be completed in sub-linear time for a large class of inputs">[Chaer1]</a> the use of one-sided binary search, as documented in <a data-link-type="biblio" href="#biblio-skiena1" title="The Algorithm Design Manual">[Skiena1]</a>, to obtain a modest improvement to worst-case scenario complexity, and a much more radical improvement to the best-case complexity:</p>
+   <table>
+    <thead>
+     <tr>
+      <th>
+      <th colspan="2">Best case
+      <th colspan="2">Worst case
+     <tr>
+      <th rowspan="2">Algorithm
+      <th>Comparisons
+      <th>Iterations
+      <th>Comparisons
+      <th>Iterations
+    <tbody>
+     <tr>
+      <td>Classic
+      <td><em>log₂(N)</em>
+      <td><em>2 × N</em>
+      <td><em>log₂(N)</em>
+      <td><em>2 × N</em>
+     <tr>
+      <td>One-sided
+      <td><em>1</em>
+      <td><em>1</em>
+      <td><em>2×log₂(N)</em>
+      <td><em>N</em>
+   </table>
    <p>In the worst-case scenario the algorithm’s complexity presents linear growth with the input size, which is unavoidable for non-random-access iterators, but with a much gentler slope than classic binary search. The number of comparisons grows logarithmically, just like with classic binary search, but in this case with a constant multiplicative factor of <em>2</em>, meaning that, although one-sided binary search unambiguously scales better than the classic version, it may be more expensive than the latter when the number of elements in a container is small relative to the cost of comparing them. Implementation-specific time measurements are presented in the next section.</p>
    <h2 class="heading settled" data-level="3" id="implementation-experience"><span class="secno">3. </span><span class="content">Implementation experience</span><a class="self-link" href="#implementation-experience"></a></h2>
    <p>The algorithm being proposed is in use in closed-source software, and is part of a code change submission to LLVM’s libc++ implementation of the standard library <a data-link-type="biblio" href="#biblio-chaer1" title="Pull Request: [libc++] Introduce one-sided binary search for set_intersection so that it can be completed in sub-linear time for a large class of inputs">[Chaer1]</a>.</p>
