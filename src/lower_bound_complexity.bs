@@ -174,7 +174,7 @@ While all of this is interesting in the context of `std::set_intersection()`, it
 
 ## Experimental use of one-sided binary search in `std::lower_bound()` ## {#lower_bound_bench}
 
-The original libc++ library change proposal is preserved in [[Chaer2]], and the existing `std::lower_bound()` benchmark program from the LLVM repository was modified to demonstrate its impact (see <a href=https://github.com/ichaer/llvm-project-onesided_lower_bound/blob/b97697a6d63a2a490738987eaa3d7420248848af/libcxx/benchmarks/algorithms/lower_bound.bench.cpp>*lower_bound.bench.cpp* revision b97697a</a> for the source code). CPU time was measured for `std::lower_bound()` locating elements from `std:set`s with 6 different value types, and of 8 different sizes in the [1, 2<sup>18</sup>] range. All tests were executed on a "11th Gen Intel(R) Core(TM) i7-11850H @ 2.50GHz" CPU with its auto-scaling functionality disabled.
+The original libc++ library change proposal is preserved in [[Chaer2]], and the existing `std::lower_bound()` benchmark program from the LLVM repository was modified to demonstrate its impact (see <a href=https://github.com/ichaer/llvm-project-onesided_lower_bound/commit/36e975e4240758f3875f09ec955af77c5931072c#diff-c4640e84ed5742db234ac7ce9331cd08bda6db14d9bd2fa26c72b729cbd740a5>*lower_bound.bench.cpp* revision 36e975e424</a> for the source code, the baseline for comparison is <a href="https://github.com/llvm/llvm-project/commit/b926f75e89">revision b926f75e89 of the LLVM project</a> plus the benchmark changes). CPU time was measured for `std::lower_bound()` locating elements from `std:set`s with 6 different value types, and of 8 different sizes in the [1, 2<sup>18</sup>] range. All tests were executed on a "11th Gen Intel(R) Core(TM) i7-11850H @ 2.50GHz" CPU with its auto-scaling functionality disabled.
 
 <table style="border:none;">
     <tr>
@@ -195,64 +195,111 @@ The original libc++ library change proposal is preserved in [[Chaer2]], and the 
 <summary>Raw data</summary>
 <table>
 <thead>
-<tr><th colspan=2></th><th colspan=2>Time (ns)</th></tr>
-<tr><th rowspan=2>Type</th><th rowspan=2>Size</th><th>Classic</th><th>One-sided</th></tr>
+<tr><th colspan=2></th><th colspan=2>CPU time (ns)</th><th></th></tr>
+<tr><th rowspan=2>Type</th><th rowspan=2>Size</th><th>Classic</th><th>One-sided</th><th>Ratio</th></tr>
 </thead>
 <tbody>
-<tr><td>name&lt;cpu_time&gt;</td><td>time_unit</td><td></td><td></tr></td>
-<tr><td>std::set&lt;float&gt;</td><td>1</td><td>157.841033935583</td><td>155.150051117167</tr></td>
-<tr><td>std::set&lt;float&gt;</td><td>4</td><td>225.52050781255</td><td>219.645721435627</tr></td>
-<tr><td>std::set&lt;float&gt;</td><td>16</td><td>645.258483886769</td><td>590.656616210927</tr></td>
-<tr><td>std::set&lt;float&gt;</td><td>64</td><td>2123.96801757812</td><td>1946.63037109374</tr></td>
-<tr><td>std::set&lt;float&gt;</td><td>256</td><td>7883.3388671875</td><td>6882.17089843746</tr></td>
-<tr><td>std::set&lt;float&gt;</td><td>1024</td><td>31574.7265624999</td><td>27090.3281250001</tr></td>
-<tr><td>std::set&lt;float&gt;</td><td>16384</td><td>645827.625000001</td><td>507287.500000001</tr></td>
-<tr><td>std::set&lt;float&gt;</td><td>262144</td><td>15195462.4375</td><td>9071708.81249999</tr></td>
-<tr><td>std::set&lt;std::pair&lt;uint32_t, uint32_t&gt;&gt;</td><td>1</td><td>162.188838958799</td><td>161.847568511872</tr></td>
-<tr><td>std::set&lt;std::pair&lt;uint32_t, uint32_t&gt;&gt;</td><td>4</td><td>260.938751220734</td><td>271.034957885762</tr></td>
-<tr><td>std::set&lt;std::pair&lt;uint32_t, uint32_t&gt;&gt;</td><td>16</td><td>616.962158203104</td><td>581.088989257781</tr></td>
-<tr><td>std::set&lt;std::pair&lt;uint32_t, uint32_t&gt;&gt;</td><td>64</td><td>2171.63232421878</td><td>1806.88525390623</tr></td>
-<tr><td>std::set&lt;std::pair&lt;uint32_t, uint32_t&gt;&gt;</td><td>256</td><td>7746.10937500001</td><td>6673.02050781253</tr></td>
-<tr><td>std::set&lt;std::pair&lt;uint32_t, uint32_t&gt;&gt;</td><td>1024</td><td>31003.2031250001</td><td>25712.8437500001</tr></td>
-<tr><td>std::set&lt;std::pair&lt;uint32_t, uint32_t&gt;&gt;</td><td>16384</td><td>642202.5</td><td>530180.8125</tr></td>
-<tr><td>std::set&lt;std::pair&lt;uint32_t, uint32_t&gt;&gt;</td><td>262144</td><td>15409862</td><td>10871770.6875</tr></td>
-<tr><td>std::set&lt;std::string&gt;</td><td>1</td><td>197.436843872118</td><td>197.073902130046</tr></td>
-<tr><td>std::set&lt;std::string&gt;</td><td>4</td><td>313.590896606468</td><td>270.086929321417</tr></td>
-<tr><td>std::set&lt;std::string&gt;</td><td>16</td><td>724.393310546954</td><td>665.274780273511</tr></td>
-<tr><td>std::set&lt;std::string&gt;</td><td>64</td><td>2438.77050781245</td><td>2219.0539550783</tr></td>
-<tr><td>std::set&lt;std::string&gt;</td><td>256</td><td>9282.77441406229</td><td>8338.58984375021</tr></td>
-<tr><td>std::set&lt;std::string&gt;</td><td>1024</td><td>41040.6757812514</td><td>35348.5781250006</tr></td>
-<tr><td>std::set&lt;std::string&gt;</td><td>16384</td><td>921738.374999998</td><td>859987.124999995</tr></td>
-<tr><td>std::set&lt;std::string&gt;</td><td>262144</td><td>43657717.4999999</td><td>39776752.7500001</tr></td>
-<tr><td>std::set&lt;std::tuple&lt;uint32_t, uint64_t, uint32_t&gt;&gt;</td><td>1</td><td>182.622070312649</td><td>177.043598175048</tr></td>
-<tr><td>std::set&lt;std::tuple&lt;uint32_t, uint64_t, uint32_t&gt;&gt;</td><td>4</td><td>224.463363647458</td><td>219.369308471706</tr></td>
-<tr><td>std::set&lt;std::tuple&lt;uint32_t, uint64_t, uint32_t&gt;&gt;</td><td>16</td><td>658.733215331987</td><td>630.211730957027</tr></td>
-<tr><td>std::set&lt;std::tuple&lt;uint32_t, uint64_t, uint32_t&gt;&gt;</td><td>64</td><td>2129.89941406248</td><td>1873.48974609375</tr></td>
-<tr><td>std::set&lt;std::tuple&lt;uint32_t, uint64_t, uint32_t&gt;&gt;</td><td>256</td><td>7906.57714843747</td><td>6883.60253906256</tr></td>
-<tr><td>std::set&lt;std::tuple&lt;uint32_t, uint64_t, uint32_t&gt;&gt;</td><td>1024</td><td>33145.0390625002</td><td>27847.89453125</tr></td>
-<tr><td>std::set&lt;std::tuple&lt;uint32_t, uint64_t, uint32_t&gt;&gt;</td><td>16384</td><td>671663.4375</td><td>515817.9375</tr></td>
-<tr><td>std::set&lt;std::tuple&lt;uint32_t, uint64_t, uint32_t&gt;&gt;</td><td>262144</td><td>24468278.0625</td><td>11235433</tr></td>
-<tr><td>std::set&lt;uint32_t&gt;</td><td>1</td><td>179.178524017321</td><td>195.396003723181</tr></td>
-<tr><td>std::set&lt;uint32_t&gt;</td><td>4</td><td>231.760955810497</td><td>226.139038086014</tr></td>
-<tr><td>std::set&lt;uint32_t&gt;</td><td>16</td><td>639.681213378884</td><td>566.204895019543</tr></td>
-<tr><td>std::set&lt;uint32_t&gt;</td><td>64</td><td>2113.84741210939</td><td>1813.38891601566</tr></td>
-<tr><td>std::set&lt;uint32_t&gt;</td><td>256</td><td>7884.30859375006</td><td>6674.29492187507</tr></td>
-<tr><td>std::set&lt;uint32_t&gt;</td><td>1024</td><td>31406.90625</td><td>26385.5859375</tr></td>
-<tr><td>std::set&lt;uint32_t&gt;</td><td>16384</td><td>635306.562499999</td><td>476300.249999999</tr></td>
-<tr><td>std::set&lt;uint32_t&gt;</td><td>262144</td><td>15404765.0625</td><td>8844881.8125</tr></td>
-<tr><td>std::set&lt;uint64_t&gt;</td><td>1</td><td>193.389709472601</td><td>189.393211364809</tr></td>
-<tr><td>std::set&lt;uint64_t&gt;</td><td>4</td><td>224.608291626161</td><td>217.471572875998</tr></td>
-<tr><td>std::set&lt;uint64_t&gt;</td><td>16</td><td>629.315612793026</td><td>575.697875976568</tr></td>
-<tr><td>std::set&lt;uint64_t&gt;</td><td>64</td><td>2039.05761718751</td><td>1796.75268554687</tr></td>
-<tr><td>std::set&lt;uint64_t&gt;</td><td>256</td><td>7781.46777343752</td><td>6572.19628906252</tr></td>
-<tr><td>std::set&lt;uint64_t&gt;</td><td>1024</td><td>30737.58984375</td><td>27896.6562499998</tr></td>
-<tr><td>std::set&lt;uint64_t&gt;</td><td>16384</td><td>641660.5625</td><td>472708.875</tr></td>
-<tr><td>std::set&lt;uint64_t&gt;</td><td>262144</td><td>15515018.625</td><td>10473658.125</tr></td>
+<tr><td>std::set&lt;float&gt;</td><td>1</td><td>2.51E+00</td><td>1.78E+00</td><td>1.41</td></tr>
+<tr><td>std::set&lt;float&gt;</td><td>4</td><td>2.02E+01</td><td>1.32E+01</td><td>1.53</td></tr>
+<tr><td>std::set&lt;float&gt;</td><td>16</td><td>1.57E+02</td><td>7.92E+01</td><td>1.99</td></tr>
+<tr><td>std::set&lt;float&gt;</td><td>64</td><td>8.09E+02</td><td>5.25E+02</td><td>1.54</td></tr>
+<tr><td>std::set&lt;float&gt;</td><td>256</td><td>3.56E+03</td><td>2.18E+03</td><td>1.64</td></tr>
+<tr><td>std::set&lt;float&gt;</td><td>1024</td><td>2.41E+04</td><td>1.66E+04</td><td>1.45</td></tr>
+<tr><td>std::set&lt;float&gt;</td><td>16384</td><td>1.11E+06</td><td>7.45E+05</td><td>1.50</td></tr>
+<tr><td>std::set&lt;float&gt;</td><td>262144</td><td>2.64E+07</td><td>1.58E+07</td><td>1.67</td></tr>
+<tr><td>std::set&lt;std::pair&lt;uint32_t, uint32_t&gt;&gt;</td><td>1</td><td>3.62E+00</td><td>2.81E+00</td><td>1.29</td></tr>
+<tr><td>std::set&lt;std::pair&lt;uint32_t, uint32_t&gt;&gt;</td><td>4</td><td>2.32E+01</td><td>1.61E+01</td><td>1.44</td></tr>
+<tr><td>std::set&lt;std::pair&lt;uint32_t, uint32_t&gt;&gt;</td><td>16</td><td>1.54E+02</td><td>8.36E+01</td><td>1.84</td></tr>
+<tr><td>std::set&lt;std::pair&lt;uint32_t, uint32_t&gt;&gt;</td><td>64</td><td>7.92E+02</td><td>5.24E+02</td><td>1.51</td></tr>
+<tr><td>std::set&lt;std::pair&lt;uint32_t, uint32_t&gt;&gt;</td><td>256</td><td>3.49E+03</td><td>2.18E+03</td><td>1.60</td></tr>
+<tr><td>std::set&lt;std::pair&lt;uint32_t, uint32_t&gt;&gt;</td><td>1024</td><td>2.23E+04</td><td>1.57E+04</td><td>1.41</td></tr>
+<tr><td>std::set&lt;std::pair&lt;uint32_t, uint32_t&gt;&gt;</td><td>16384</td><td>1.08E+06</td><td>7.53E+05</td><td>1.44</td></tr>
+<tr><td>std::set&lt;std::pair&lt;uint32_t, uint32_t&gt;&gt;</td><td>262144</td><td>2.61E+07</td><td>1.59E+07</td><td>1.65</td></tr>
+<tr><td>std::set&lt;std::string&gt;</td><td>1</td><td>2.44E+01</td><td>2.09E+01</td><td>1.17</td></tr>
+<tr><td>std::set&lt;std::string&gt;</td><td>4</td><td>5.96E+01</td><td>5.81E+01</td><td>1.03</td></tr>
+<tr><td>std::set&lt;std::string&gt;</td><td>16</td><td>2.80E+02</td><td>1.92E+02</td><td>1.46</td></tr>
+<tr><td>std::set&lt;std::string&gt;</td><td>64</td><td>1.10E+03</td><td>6.98E+02</td><td>1.58</td></tr>
+<tr><td>std::set&lt;std::string&gt;</td><td>256</td><td>5.17E+03</td><td>3.41E+03</td><td>1.52</td></tr>
+<tr><td>std::set&lt;std::string&gt;</td><td>1024</td><td>3.59E+04</td><td>2.56E+04</td><td>1.40</td></tr>
+<tr><td>std::set&lt;std::string&gt;</td><td>16384</td><td>1.21E+06</td><td>1.01E+06</td><td>1.19</td></tr>
+<tr><td>std::set&lt;std::string&gt;</td><td>262144</td><td>3.47E+07</td><td>1.85E+07</td><td>1.87</td></tr>
+<tr><td>std::set&lt;std::tuple&lt;uint32_t, uint64_t, uint32_t&gt;&gt;</td><td>1</td><td>6.24E+00</td><td>6.27E+00</td><td>1.00</td></tr>
+<tr><td>std::set&lt;std::tuple&lt;uint32_t, uint64_t, uint32_t&gt;&gt;</td><td>4</td><td>2.19E+01</td><td>1.71E+01</td><td>1.28</td></tr>
+<tr><td>std::set&lt;std::tuple&lt;uint32_t, uint64_t, uint32_t&gt;&gt;</td><td>16</td><td>1.70E+02</td><td>1.06E+02</td><td>1.60</td></tr>
+<tr><td>std::set&lt;std::tuple&lt;uint32_t, uint64_t, uint32_t&gt;&gt;</td><td>64</td><td>9.90E+02</td><td>6.26E+02</td><td>1.58</td></tr>
+<tr><td>std::set&lt;std::tuple&lt;uint32_t, uint64_t, uint32_t&gt;&gt;</td><td>256</td><td>3.88E+03</td><td>2.78E+03</td><td>1.40</td></tr>
+<tr><td>std::set&lt;std::tuple&lt;uint32_t, uint64_t, uint32_t&gt;&gt;</td><td>1024</td><td>3.38E+04</td><td>2.33E+04</td><td>1.45</td></tr>
+<tr><td>std::set&lt;std::tuple&lt;uint32_t, uint64_t, uint32_t&gt;&gt;</td><td>16384</td><td>1.23E+06</td><td>1.01E+06</td><td>1.22</td></tr>
+<tr><td>std::set&lt;std::tuple&lt;uint32_t, uint64_t, uint32_t&gt;&gt;</td><td>262144</td><td>3.48E+07</td><td>1.85E+07</td><td>1.88</td></tr>
+<tr><td>std::set&lt;uint32_t&gt;</td><td>1</td><td>4.06E+00</td><td>2.01E+00</td><td>2.02</td></tr>
+<tr><td>std::set&lt;uint32_t&gt;</td><td>4</td><td>2.37E+01</td><td>1.35E+01</td><td>1.76</td></tr>
+<tr><td>std::set&lt;uint32_t&gt;</td><td>16</td><td>1.61E+02</td><td>7.71E+01</td><td>2.09</td></tr>
+<tr><td>std::set&lt;uint32_t&gt;</td><td>64</td><td>8.57E+02</td><td>5.20E+02</td><td>1.65</td></tr>
+<tr><td>std::set&lt;uint32_t&gt;</td><td>256</td><td>3.46E+03</td><td>2.22E+03</td><td>1.55</td></tr>
+<tr><td>std::set&lt;uint32_t&gt;</td><td>1024</td><td>2.26E+04</td><td>1.63E+04</td><td>1.39</td></tr>
+<tr><td>std::set&lt;uint32_t&gt;</td><td>16384</td><td>1.08E+06</td><td>7.44E+05</td><td>1.45</td></tr>
+<tr><td>std::set&lt;uint32_t&gt;</td><td>262144</td><td>2.60E+07</td><td>1.57E+07</td><td>1.65</td></tr>
+<tr><td>std::set&lt;uint64_t&gt;</td><td>1</td><td>3.84E+00</td><td>2.57E+00</td><td>1.49</td></tr>
+<tr><td>std::set&lt;uint64_t&gt;</td><td>4</td><td>1.98E+01</td><td>1.41E+01</td><td>1.40</td></tr>
+<tr><td>std::set&lt;uint64_t&gt;</td><td>16</td><td>1.54E+02</td><td>7.84E+01</td><td>1.96</td></tr>
+<tr><td>std::set&lt;uint64_t&gt;</td><td>64</td><td>8.18E+02</td><td>5.12E+02</td><td>1.60</td></tr>
+<tr><td>std::set&lt;uint64_t&gt;</td><td>256</td><td>3.52E+03</td><td>2.26E+03</td><td>1.55</td></tr>
+<tr><td>std::set&lt;uint64_t&gt;</td><td>1024</td><td>2.28E+04</td><td>1.55E+04</td><td>1.47</td></tr>
+<tr><td>std::set&lt;uint64_t&gt;</td><td>16384</td><td>1.11E+06</td><td>7.44E+05</td><td>1.50</td></tr>
+<tr><td>std::set&lt;uint64_t&gt;</td><td>262144</td><td>2.64E+07</td><td>1.57E+07</td><td>1.68</td></tr>
+<tr><td>std::vector&lt;float&gt;</td><td>1</td><td>1.97E+00</td><td>1.84E+00</td><td>1.07</td></tr>
+<tr><td>std::vector&lt;float&gt;</td><td>4</td><td>7.67E+00</td><td>6.93E+00</td><td>1.11</td></tr>
+<tr><td>std::vector&lt;float&gt;</td><td>16</td><td>1.82E+01</td><td>1.75E+01</td><td>1.04</td></tr>
+<tr><td>std::vector&lt;float&gt;</td><td>64</td><td>2.99E+01</td><td>3.04E+01</td><td>0.98</td></tr>
+<tr><td>std::vector&lt;float&gt;</td><td>256</td><td>4.35E+01</td><td>4.49E+01</td><td>0.97</td></tr>
+<tr><td>std::vector&lt;float&gt;</td><td>1024</td><td>7.01E+01</td><td>8.04E+01</td><td>0.87</td></tr>
+<tr><td>std::vector&lt;float&gt;</td><td>16384</td><td>2.03E+02</td><td>2.47E+02</td><td>0.82</td></tr>
+<tr><td>std::vector&lt;float&gt;</td><td>262144</td><td>4.07E+02</td><td>5.33E+02</td><td>0.76</td></tr>
+<tr><td>std::vector&lt;std::pair&lt;uint32_t, uint32_t&gt;&gt;</td><td>1</td><td>2.12E+00</td><td>2.03E+00</td><td>1.04</td></tr>
+<tr><td>std::vector&lt;std::pair&lt;uint32_t, uint32_t&gt;&gt;</td><td>4</td><td>9.12E+00</td><td>9.25E+00</td><td>0.99</td></tr>
+<tr><td>std::vector&lt;std::pair&lt;uint32_t, uint32_t&gt;&gt;</td><td>16</td><td>2.07E+01</td><td>2.17E+01</td><td>0.96</td></tr>
+<tr><td>std::vector&lt;std::pair&lt;uint32_t, uint32_t&gt;&gt;</td><td>64</td><td>3.35E+01</td><td>3.54E+01</td><td>0.95</td></tr>
+<tr><td>std::vector&lt;std::pair&lt;uint32_t, uint32_t&gt;&gt;</td><td>256</td><td>5.76E+01</td><td>6.17E+01</td><td>0.93</td></tr>
+<tr><td>std::vector&lt;std::pair&lt;uint32_t, uint32_t&gt;&gt;</td><td>1024</td><td>9.44E+01</td><td>1.25E+02</td><td>0.75</td></tr>
+<tr><td>std::vector&lt;std::pair&lt;uint32_t, uint32_t&gt;&gt;</td><td>16384</td><td>2.79E+02</td><td>4.04E+02</td><td>0.69</td></tr>
+<tr><td>std::vector&lt;std::pair&lt;uint32_t, uint32_t&gt;&gt;</td><td>262144</td><td>5.78E+02</td><td>8.76E+02</td><td>0.66</td></tr>
+<tr><td>std::vector&lt;std::string&gt;</td><td>1</td><td>2.43E+01</td><td>2.08E+01</td><td>1.16</td></tr>
+<tr><td>std::vector&lt;std::string&gt;</td><td>4</td><td>4.24E+01</td><td>4.08E+01</td><td>1.04</td></tr>
+<tr><td>std::vector&lt;std::string&gt;</td><td>16</td><td>8.40E+01</td><td>9.78E+01</td><td>0.86</td></tr>
+<tr><td>std::vector&lt;std::string&gt;</td><td>64</td><td>1.34E+02</td><td>1.53E+02</td><td>0.88</td></tr>
+<tr><td>std::vector&lt;std::string&gt;</td><td>256</td><td>2.52E+02</td><td>3.10E+02</td><td>0.81</td></tr>
+<tr><td>std::vector&lt;std::string&gt;</td><td>1024</td><td>4.60E+02</td><td>6.36E+02</td><td>0.72</td></tr>
+<tr><td>std::vector&lt;std::string&gt;</td><td>16384</td><td>1.07E+03</td><td>1.45E+03</td><td>0.73</td></tr>
+<tr><td>std::vector&lt;std::string&gt;</td><td>262144</td><td>2.49E+03</td><td>3.17E+03</td><td>0.79</td></tr>
+<tr><td>std::vector&lt;std::tuple&lt;uint32_t, uint64_t, uint32_t&gt;&gt;</td><td>1</td><td>5.80E+00</td><td>5.45E+00</td><td>1.06</td></tr>
+<tr><td>std::vector&lt;std::tuple&lt;uint32_t, uint64_t, uint32_t&gt;&gt;</td><td>4</td><td>1.01E+01</td><td>1.00E+01</td><td>1.01</td></tr>
+<tr><td>std::vector&lt;std::tuple&lt;uint32_t, uint64_t, uint32_t&gt;&gt;</td><td>16</td><td>1.92E+01</td><td>2.40E+01</td><td>0.80</td></tr>
+<tr><td>std::vector&lt;std::tuple&lt;uint32_t, uint64_t, uint32_t&gt;&gt;</td><td>64</td><td>4.23E+01</td><td>5.21E+01</td><td>0.81</td></tr>
+<tr><td>std::vector&lt;std::tuple&lt;uint32_t, uint64_t, uint32_t&gt;&gt;</td><td>256</td><td>8.35E+01</td><td>1.16E+02</td><td>0.72</td></tr>
+<tr><td>std::vector&lt;std::tuple&lt;uint32_t, uint64_t, uint32_t&gt;&gt;</td><td>1024</td><td>1.41E+02</td><td>1.87E+02</td><td>0.75</td></tr>
+<tr><td>std::vector&lt;std::tuple&lt;uint32_t, uint64_t, uint32_t&gt;&gt;</td><td>16384</td><td>3.48E+02</td><td>5.23E+02</td><td>0.67</td></tr>
+<tr><td>std::vector&lt;std::tuple&lt;uint32_t, uint64_t, uint32_t&gt;&gt;</td><td>262144</td><td>7.38E+02</td><td>1.04E+03</td><td>0.71</td></tr>
+<tr><td>std::vector&lt;uint32_t&gt;</td><td>1</td><td>2.43E+00</td><td>1.62E+00</td><td>1.50</td></tr>
+<tr><td>std::vector&lt;uint32_t&gt;</td><td>4</td><td>6.19E+00</td><td>7.45E+00</td><td>0.83</td></tr>
+<tr><td>std::vector&lt;uint32_t&gt;</td><td>16</td><td>5.86E+00</td><td>1.11E+01</td><td>0.53</td></tr>
+<tr><td>std::vector&lt;uint32_t&gt;</td><td>64</td><td>7.82E+00</td><td>1.35E+01</td><td>0.58</td></tr>
+<tr><td>std::vector&lt;uint32_t&gt;</td><td>256</td><td>1.61E+01</td><td>2.00E+01</td><td>0.80</td></tr>
+<tr><td>std::vector&lt;uint32_t&gt;</td><td>1024</td><td>4.07E+01</td><td>5.48E+01</td><td>0.74</td></tr>
+<tr><td>std::vector&lt;uint32_t&gt;</td><td>16384</td><td>2.78E+02</td><td>3.04E+02</td><td>0.91</td></tr>
+<tr><td>std::vector&lt;uint32_t&gt;</td><td>262144</td><td>6.89E+02</td><td>8.70E+02</td><td>0.79</td></tr>
+<tr><td>std::vector&lt;uint64_t&gt;</td><td>1</td><td>2.01E+00</td><td>2.51E+00</td><td>0.80</td></tr>
+<tr><td>std::vector&lt;uint64_t&gt;</td><td>4</td><td>6.71E+00</td><td>7.60E+00</td><td>0.88</td></tr>
+<tr><td>std::vector&lt;uint64_t&gt;</td><td>16</td><td>8.27E+00</td><td>1.40E+01</td><td>0.59</td></tr>
+<tr><td>std::vector&lt;uint64_t&gt;</td><td>64</td><td>1.06E+01</td><td>1.56E+01</td><td>0.68</td></tr>
+<tr><td>std::vector&lt;uint64_t&gt;</td><td>256</td><td>2.84E+01</td><td>3.23E+01</td><td>0.88</td></tr>
+<tr><td>std::vector&lt;uint64_t&gt;</td><td>1024</td><td>6.41E+01</td><td>7.49E+01</td><td>0.85</td></tr>
+<tr><td>std::vector&lt;uint64_t&gt;</td><td>16384</td><td>3.42E+02</td><td>3.64E+02</td><td>0.94</td></tr>
+<tr><td>std::vector&lt;uint64_t&gt;</td><td>262144</td><td>8.09E+02</td><td>9.65E+02</td><td>0.84</td></tr>
 </tbody>
 </table>
 </details>
 
-Nearly all graphs show increasing divergence between the original version, implementing classic binary search, and the one using one-sided binary search, consistent with the expectation from the slope change for the most relevant factor of the algorithmic complexity. The notable exception is `std::set<std::string>`, where comparisons are much more expensive, and loading string contents from memory has a complex interaction with CPU cache contents, giving the time vs. size curves for both algorithms a less linear aspect than for the other types, with the one-sided binary search algorithm following almost parallel to the classic algorithm, albeit consistently faster. The speedup for the simpler types is satisfyingly close to the *2x* improvement predicted.
+All graphs show increasing divergence between the original version, implementing classic binary search, and the one using one-sided binary search, consistent with the expectation from the slope change for the most relevant factor of the algorithmic complexity. The speedup, as it might be expected due to additional constants and memory locality questions, is below the theoretical *2x* improvement predicted, but for the largest container size it's always at least *1.65x* (see the raw data above for more detail, including measurements for `std::vector`, which is not part of the scope of this proposal).
 
 
 Alternative: expose one-sided binary search directly {#alternative}

@@ -1563,7 +1563,7 @@ Possible extra rowspan handling
   </style>
   <meta content="Bikeshed version 4416b18d5, updated Tue Jan 2 15:52:39 2024 -0800" name="generator">
   <link href="https://isocpp.org/favicon.ico" rel="icon">
-  <meta content="dc81fdc71cc9dfbdadc49eae235cd9998b4c2df7" name="revision">
+  <meta content="6e2b821d2b69603da200ace2460be7c023408d74" name="revision">
 <style>/* Boilerplate: style-autolinks */
 .css.css, .property.property, .descriptor.descriptor {
     color: var(--a-normal-text);
@@ -2334,7 +2334,7 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
    <p>The number of iterator mutations follows a similar equation for random-access iterators, multiplied by a factor of <em>1.5</em>, making the overall algorithm’s complexity sublinear for a wide range of inputs.</p>
    <p>While all of this is interesting in the context of <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>set_intersection</c-><c- p>()</c-></code>, it’s important to keep in mind that this proposal is for a change to <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>lower_bound</c-><c- p>()</c-></code>’s complexity guarantees: it’s not even thinkable to use classic binary search in this context. While there is certainly room for discussing the tradeoffs in using one-sided binary search in <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>set_intersection</c-><c- p>()</c-></code>, the algorithm is powerful enough to change the range of viable applications for <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>lower_bound</c-><c- p>()</c-></code>.</p>
    <h3 class="heading settled" data-level="3.2" id="lower_bound_bench"><span class="secno">3.2. </span><span class="content">Experimental use of one-sided binary search in <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>lower_bound</c-><c- p>()</c-></code></span><a class="self-link" href="#lower_bound_bench"></a></h3>
-   <p>The original libc++ library change proposal is preserved in <a data-link-type="biblio" href="#biblio-chaer2" title="Pull Request: Use one-sided binary search for lower_bound on non-random iterators">[Chaer2]</a>, and the existing <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>lower_bound</c-><c- p>()</c-></code> benchmark program from the LLVM repository was modified to demonstrate its impact (see <a href="https://github.com/ichaer/llvm-project-onesided_lower_bound/blob/b97697a6d63a2a490738987eaa3d7420248848af/libcxx/benchmarks/algorithms/lower_bound.bench.cpp"><em>lower_bound.bench.cpp</em> revision b97697a</a> for the source code). CPU time was measured for <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>lower_bound</c-><c- p>()</c-></code> locating elements from <code class="highlight"><c- nl>std</c-><c- p>:</c-><c- n>set</c-></code>s with 6 different value types, and of 8 different sizes in the [1, 2<sup>18</sup>] range. All tests were executed on a "11th Gen Intel(R) Core(TM) i7-11850H @ 2.50GHz" CPU with its auto-scaling functionality disabled.</p>
+   <p>The original libc++ library change proposal is preserved in <a data-link-type="biblio" href="#biblio-chaer2" title="Pull Request: Use one-sided binary search for lower_bound on non-random iterators">[Chaer2]</a>, and the existing <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>lower_bound</c-><c- p>()</c-></code> benchmark program from the LLVM repository was modified to demonstrate its impact (see <a href="https://github.com/ichaer/llvm-project-onesided_lower_bound/commit/36e975e4240758f3875f09ec955af77c5931072c#diff-c4640e84ed5742db234ac7ce9331cd08bda6db14d9bd2fa26c72b729cbd740a5"><em>lower_bound.bench.cpp</em> revision 36e975e424</a> for the source code, the baseline for comparison is <a href="https://github.com/llvm/llvm-project/commit/b926f75e89">revision b926f75e89 of the LLVM project</a> plus the benchmark changes). CPU time was measured for <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>lower_bound</c-><c- p>()</c-></code> locating elements from <code class="highlight"><c- nl>std</c-><c- p>:</c-><c- n>set</c-></code>s with 6 different value types, and of 8 different sizes in the [1, 2<sup>18</sup>] range. All tests were executed on a "11th Gen Intel(R) Core(TM) i7-11850H @ 2.50GHz" CPU with its auto-scaling functionality disabled.</p>
    <table style="border:none;">
     <tbody>
      <tr>
@@ -2353,261 +2353,594 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
      <thead>
       <tr>
        <th colspan="2">
-       <th colspan="2">Time (ns)
+       <th colspan="2">CPU time (ns)
+       <th>
       <tr>
        <th rowspan="2">Type
        <th rowspan="2">Size
        <th>Classic
        <th>One-sided
+       <th>Ratio
      <tbody>
       <tr>
-       <td>name&lt;cpu_time>
-       <td>time_unit
-       <td>
-       <td>
-      <tr>
        <td>std::set&lt;float>
        <td>1
-       <td>157.841033935583
-       <td>155.150051117167
+       <td>2.51E+00
+       <td>1.78E+00
+       <td>1.41
       <tr>
        <td>std::set&lt;float>
        <td>4
-       <td>225.52050781255
-       <td>219.645721435627
+       <td>2.02E+01
+       <td>1.32E+01
+       <td>1.53
       <tr>
        <td>std::set&lt;float>
        <td>16
-       <td>645.258483886769
-       <td>590.656616210927
+       <td>1.57E+02
+       <td>7.92E+01
+       <td>1.99
       <tr>
        <td>std::set&lt;float>
        <td>64
-       <td>2123.96801757812
-       <td>1946.63037109374
+       <td>8.09E+02
+       <td>5.25E+02
+       <td>1.54
       <tr>
        <td>std::set&lt;float>
        <td>256
-       <td>7883.3388671875
-       <td>6882.17089843746
+       <td>3.56E+03
+       <td>2.18E+03
+       <td>1.64
       <tr>
        <td>std::set&lt;float>
        <td>1024
-       <td>31574.7265624999
-       <td>27090.3281250001
+       <td>2.41E+04
+       <td>1.66E+04
+       <td>1.45
       <tr>
        <td>std::set&lt;float>
        <td>16384
-       <td>645827.625000001
-       <td>507287.500000001
+       <td>1.11E+06
+       <td>7.45E+05
+       <td>1.50
       <tr>
        <td>std::set&lt;float>
        <td>262144
-       <td>15195462.4375
-       <td>9071708.81249999
+       <td>2.64E+07
+       <td>1.58E+07
+       <td>1.67
       <tr>
        <td>std::set&lt;std::pair&lt;uint32_t, uint32_t>>
        <td>1
-       <td>162.188838958799
-       <td>161.847568511872
+       <td>3.62E+00
+       <td>2.81E+00
+       <td>1.29
       <tr>
        <td>std::set&lt;std::pair&lt;uint32_t, uint32_t>>
        <td>4
-       <td>260.938751220734
-       <td>271.034957885762
+       <td>2.32E+01
+       <td>1.61E+01
+       <td>1.44
       <tr>
        <td>std::set&lt;std::pair&lt;uint32_t, uint32_t>>
        <td>16
-       <td>616.962158203104
-       <td>581.088989257781
+       <td>1.54E+02
+       <td>8.36E+01
+       <td>1.84
       <tr>
        <td>std::set&lt;std::pair&lt;uint32_t, uint32_t>>
        <td>64
-       <td>2171.63232421878
-       <td>1806.88525390623
+       <td>7.92E+02
+       <td>5.24E+02
+       <td>1.51
       <tr>
        <td>std::set&lt;std::pair&lt;uint32_t, uint32_t>>
        <td>256
-       <td>7746.10937500001
-       <td>6673.02050781253
+       <td>3.49E+03
+       <td>2.18E+03
+       <td>1.60
       <tr>
        <td>std::set&lt;std::pair&lt;uint32_t, uint32_t>>
        <td>1024
-       <td>31003.2031250001
-       <td>25712.8437500001
+       <td>2.23E+04
+       <td>1.57E+04
+       <td>1.41
       <tr>
        <td>std::set&lt;std::pair&lt;uint32_t, uint32_t>>
        <td>16384
-       <td>642202.5
-       <td>530180.8125
+       <td>1.08E+06
+       <td>7.53E+05
+       <td>1.44
       <tr>
        <td>std::set&lt;std::pair&lt;uint32_t, uint32_t>>
        <td>262144
-       <td>15409862
-       <td>10871770.6875
+       <td>2.61E+07
+       <td>1.59E+07
+       <td>1.65
       <tr>
        <td>std::set&lt;std::string>
        <td>1
-       <td>197.436843872118
-       <td>197.073902130046
+       <td>2.44E+01
+       <td>2.09E+01
+       <td>1.17
       <tr>
        <td>std::set&lt;std::string>
        <td>4
-       <td>313.590896606468
-       <td>270.086929321417
+       <td>5.96E+01
+       <td>5.81E+01
+       <td>1.03
       <tr>
        <td>std::set&lt;std::string>
        <td>16
-       <td>724.393310546954
-       <td>665.274780273511
+       <td>2.80E+02
+       <td>1.92E+02
+       <td>1.46
       <tr>
        <td>std::set&lt;std::string>
        <td>64
-       <td>2438.77050781245
-       <td>2219.0539550783
+       <td>1.10E+03
+       <td>6.98E+02
+       <td>1.58
       <tr>
        <td>std::set&lt;std::string>
        <td>256
-       <td>9282.77441406229
-       <td>8338.58984375021
+       <td>5.17E+03
+       <td>3.41E+03
+       <td>1.52
       <tr>
        <td>std::set&lt;std::string>
        <td>1024
-       <td>41040.6757812514
-       <td>35348.5781250006
+       <td>3.59E+04
+       <td>2.56E+04
+       <td>1.40
       <tr>
        <td>std::set&lt;std::string>
        <td>16384
-       <td>921738.374999998
-       <td>859987.124999995
+       <td>1.21E+06
+       <td>1.01E+06
+       <td>1.19
       <tr>
        <td>std::set&lt;std::string>
        <td>262144
-       <td>43657717.4999999
-       <td>39776752.7500001
+       <td>3.47E+07
+       <td>1.85E+07
+       <td>1.87
       <tr>
        <td>std::set&lt;std::tuple&lt;uint32_t, uint64_t, uint32_t>>
        <td>1
-       <td>182.622070312649
-       <td>177.043598175048
+       <td>6.24E+00
+       <td>6.27E+00
+       <td>1.00
       <tr>
        <td>std::set&lt;std::tuple&lt;uint32_t, uint64_t, uint32_t>>
        <td>4
-       <td>224.463363647458
-       <td>219.369308471706
+       <td>2.19E+01
+       <td>1.71E+01
+       <td>1.28
       <tr>
        <td>std::set&lt;std::tuple&lt;uint32_t, uint64_t, uint32_t>>
        <td>16
-       <td>658.733215331987
-       <td>630.211730957027
+       <td>1.70E+02
+       <td>1.06E+02
+       <td>1.60
       <tr>
        <td>std::set&lt;std::tuple&lt;uint32_t, uint64_t, uint32_t>>
        <td>64
-       <td>2129.89941406248
-       <td>1873.48974609375
+       <td>9.90E+02
+       <td>6.26E+02
+       <td>1.58
       <tr>
        <td>std::set&lt;std::tuple&lt;uint32_t, uint64_t, uint32_t>>
        <td>256
-       <td>7906.57714843747
-       <td>6883.60253906256
+       <td>3.88E+03
+       <td>2.78E+03
+       <td>1.40
       <tr>
        <td>std::set&lt;std::tuple&lt;uint32_t, uint64_t, uint32_t>>
        <td>1024
-       <td>33145.0390625002
-       <td>27847.89453125
+       <td>3.38E+04
+       <td>2.33E+04
+       <td>1.45
       <tr>
        <td>std::set&lt;std::tuple&lt;uint32_t, uint64_t, uint32_t>>
        <td>16384
-       <td>671663.4375
-       <td>515817.9375
+       <td>1.23E+06
+       <td>1.01E+06
+       <td>1.22
       <tr>
        <td>std::set&lt;std::tuple&lt;uint32_t, uint64_t, uint32_t>>
        <td>262144
-       <td>24468278.0625
-       <td>11235433
+       <td>3.48E+07
+       <td>1.85E+07
+       <td>1.88
       <tr>
        <td>std::set&lt;uint32_t>
        <td>1
-       <td>179.178524017321
-       <td>195.396003723181
+       <td>4.06E+00
+       <td>2.01E+00
+       <td>2.02
       <tr>
        <td>std::set&lt;uint32_t>
        <td>4
-       <td>231.760955810497
-       <td>226.139038086014
+       <td>2.37E+01
+       <td>1.35E+01
+       <td>1.76
       <tr>
        <td>std::set&lt;uint32_t>
        <td>16
-       <td>639.681213378884
-       <td>566.204895019543
+       <td>1.61E+02
+       <td>7.71E+01
+       <td>2.09
       <tr>
        <td>std::set&lt;uint32_t>
        <td>64
-       <td>2113.84741210939
-       <td>1813.38891601566
+       <td>8.57E+02
+       <td>5.20E+02
+       <td>1.65
       <tr>
        <td>std::set&lt;uint32_t>
        <td>256
-       <td>7884.30859375006
-       <td>6674.29492187507
+       <td>3.46E+03
+       <td>2.22E+03
+       <td>1.55
       <tr>
        <td>std::set&lt;uint32_t>
        <td>1024
-       <td>31406.90625
-       <td>26385.5859375
+       <td>2.26E+04
+       <td>1.63E+04
+       <td>1.39
       <tr>
        <td>std::set&lt;uint32_t>
        <td>16384
-       <td>635306.562499999
-       <td>476300.249999999
+       <td>1.08E+06
+       <td>7.44E+05
+       <td>1.45
       <tr>
        <td>std::set&lt;uint32_t>
        <td>262144
-       <td>15404765.0625
-       <td>8844881.8125
+       <td>2.60E+07
+       <td>1.57E+07
+       <td>1.65
       <tr>
        <td>std::set&lt;uint64_t>
        <td>1
-       <td>193.389709472601
-       <td>189.393211364809
+       <td>3.84E+00
+       <td>2.57E+00
+       <td>1.49
       <tr>
        <td>std::set&lt;uint64_t>
        <td>4
-       <td>224.608291626161
-       <td>217.471572875998
+       <td>1.98E+01
+       <td>1.41E+01
+       <td>1.40
       <tr>
        <td>std::set&lt;uint64_t>
        <td>16
-       <td>629.315612793026
-       <td>575.697875976568
+       <td>1.54E+02
+       <td>7.84E+01
+       <td>1.96
       <tr>
        <td>std::set&lt;uint64_t>
        <td>64
-       <td>2039.05761718751
-       <td>1796.75268554687
+       <td>8.18E+02
+       <td>5.12E+02
+       <td>1.60
       <tr>
        <td>std::set&lt;uint64_t>
        <td>256
-       <td>7781.46777343752
-       <td>6572.19628906252
+       <td>3.52E+03
+       <td>2.26E+03
+       <td>1.55
       <tr>
        <td>std::set&lt;uint64_t>
        <td>1024
-       <td>30737.58984375
-       <td>27896.6562499998
+       <td>2.28E+04
+       <td>1.55E+04
+       <td>1.47
       <tr>
        <td>std::set&lt;uint64_t>
        <td>16384
-       <td>641660.5625
-       <td>472708.875
+       <td>1.11E+06
+       <td>7.44E+05
+       <td>1.50
       <tr>
        <td>std::set&lt;uint64_t>
        <td>262144
-       <td>15515018.625
-       <td>10473658.125
+       <td>2.64E+07
+       <td>1.57E+07
+       <td>1.68
+      <tr>
+       <td>std::vector&lt;float>
+       <td>1
+       <td>1.97E+00
+       <td>1.84E+00
+       <td>1.07
+      <tr>
+       <td>std::vector&lt;float>
+       <td>4
+       <td>7.67E+00
+       <td>6.93E+00
+       <td>1.11
+      <tr>
+       <td>std::vector&lt;float>
+       <td>16
+       <td>1.82E+01
+       <td>1.75E+01
+       <td>1.04
+      <tr>
+       <td>std::vector&lt;float>
+       <td>64
+       <td>2.99E+01
+       <td>3.04E+01
+       <td>0.98
+      <tr>
+       <td>std::vector&lt;float>
+       <td>256
+       <td>4.35E+01
+       <td>4.49E+01
+       <td>0.97
+      <tr>
+       <td>std::vector&lt;float>
+       <td>1024
+       <td>7.01E+01
+       <td>8.04E+01
+       <td>0.87
+      <tr>
+       <td>std::vector&lt;float>
+       <td>16384
+       <td>2.03E+02
+       <td>2.47E+02
+       <td>0.82
+      <tr>
+       <td>std::vector&lt;float>
+       <td>262144
+       <td>4.07E+02
+       <td>5.33E+02
+       <td>0.76
+      <tr>
+       <td>std::vector&lt;std::pair&lt;uint32_t, uint32_t>>
+       <td>1
+       <td>2.12E+00
+       <td>2.03E+00
+       <td>1.04
+      <tr>
+       <td>std::vector&lt;std::pair&lt;uint32_t, uint32_t>>
+       <td>4
+       <td>9.12E+00
+       <td>9.25E+00
+       <td>0.99
+      <tr>
+       <td>std::vector&lt;std::pair&lt;uint32_t, uint32_t>>
+       <td>16
+       <td>2.07E+01
+       <td>2.17E+01
+       <td>0.96
+      <tr>
+       <td>std::vector&lt;std::pair&lt;uint32_t, uint32_t>>
+       <td>64
+       <td>3.35E+01
+       <td>3.54E+01
+       <td>0.95
+      <tr>
+       <td>std::vector&lt;std::pair&lt;uint32_t, uint32_t>>
+       <td>256
+       <td>5.76E+01
+       <td>6.17E+01
+       <td>0.93
+      <tr>
+       <td>std::vector&lt;std::pair&lt;uint32_t, uint32_t>>
+       <td>1024
+       <td>9.44E+01
+       <td>1.25E+02
+       <td>0.75
+      <tr>
+       <td>std::vector&lt;std::pair&lt;uint32_t, uint32_t>>
+       <td>16384
+       <td>2.79E+02
+       <td>4.04E+02
+       <td>0.69
+      <tr>
+       <td>std::vector&lt;std::pair&lt;uint32_t, uint32_t>>
+       <td>262144
+       <td>5.78E+02
+       <td>8.76E+02
+       <td>0.66
+      <tr>
+       <td>std::vector&lt;std::string>
+       <td>1
+       <td>2.43E+01
+       <td>2.08E+01
+       <td>1.16
+      <tr>
+       <td>std::vector&lt;std::string>
+       <td>4
+       <td>4.24E+01
+       <td>4.08E+01
+       <td>1.04
+      <tr>
+       <td>std::vector&lt;std::string>
+       <td>16
+       <td>8.40E+01
+       <td>9.78E+01
+       <td>0.86
+      <tr>
+       <td>std::vector&lt;std::string>
+       <td>64
+       <td>1.34E+02
+       <td>1.53E+02
+       <td>0.88
+      <tr>
+       <td>std::vector&lt;std::string>
+       <td>256
+       <td>2.52E+02
+       <td>3.10E+02
+       <td>0.81
+      <tr>
+       <td>std::vector&lt;std::string>
+       <td>1024
+       <td>4.60E+02
+       <td>6.36E+02
+       <td>0.72
+      <tr>
+       <td>std::vector&lt;std::string>
+       <td>16384
+       <td>1.07E+03
+       <td>1.45E+03
+       <td>0.73
+      <tr>
+       <td>std::vector&lt;std::string>
+       <td>262144
+       <td>2.49E+03
+       <td>3.17E+03
+       <td>0.79
+      <tr>
+       <td>std::vector&lt;std::tuple&lt;uint32_t, uint64_t, uint32_t>>
+       <td>1
+       <td>5.80E+00
+       <td>5.45E+00
+       <td>1.06
+      <tr>
+       <td>std::vector&lt;std::tuple&lt;uint32_t, uint64_t, uint32_t>>
+       <td>4
+       <td>1.01E+01
+       <td>1.00E+01
+       <td>1.01
+      <tr>
+       <td>std::vector&lt;std::tuple&lt;uint32_t, uint64_t, uint32_t>>
+       <td>16
+       <td>1.92E+01
+       <td>2.40E+01
+       <td>0.80
+      <tr>
+       <td>std::vector&lt;std::tuple&lt;uint32_t, uint64_t, uint32_t>>
+       <td>64
+       <td>4.23E+01
+       <td>5.21E+01
+       <td>0.81
+      <tr>
+       <td>std::vector&lt;std::tuple&lt;uint32_t, uint64_t, uint32_t>>
+       <td>256
+       <td>8.35E+01
+       <td>1.16E+02
+       <td>0.72
+      <tr>
+       <td>std::vector&lt;std::tuple&lt;uint32_t, uint64_t, uint32_t>>
+       <td>1024
+       <td>1.41E+02
+       <td>1.87E+02
+       <td>0.75
+      <tr>
+       <td>std::vector&lt;std::tuple&lt;uint32_t, uint64_t, uint32_t>>
+       <td>16384
+       <td>3.48E+02
+       <td>5.23E+02
+       <td>0.67
+      <tr>
+       <td>std::vector&lt;std::tuple&lt;uint32_t, uint64_t, uint32_t>>
+       <td>262144
+       <td>7.38E+02
+       <td>1.04E+03
+       <td>0.71
+      <tr>
+       <td>std::vector&lt;uint32_t>
+       <td>1
+       <td>2.43E+00
+       <td>1.62E+00
+       <td>1.50
+      <tr>
+       <td>std::vector&lt;uint32_t>
+       <td>4
+       <td>6.19E+00
+       <td>7.45E+00
+       <td>0.83
+      <tr>
+       <td>std::vector&lt;uint32_t>
+       <td>16
+       <td>5.86E+00
+       <td>1.11E+01
+       <td>0.53
+      <tr>
+       <td>std::vector&lt;uint32_t>
+       <td>64
+       <td>7.82E+00
+       <td>1.35E+01
+       <td>0.58
+      <tr>
+       <td>std::vector&lt;uint32_t>
+       <td>256
+       <td>1.61E+01
+       <td>2.00E+01
+       <td>0.80
+      <tr>
+       <td>std::vector&lt;uint32_t>
+       <td>1024
+       <td>4.07E+01
+       <td>5.48E+01
+       <td>0.74
+      <tr>
+       <td>std::vector&lt;uint32_t>
+       <td>16384
+       <td>2.78E+02
+       <td>3.04E+02
+       <td>0.91
+      <tr>
+       <td>std::vector&lt;uint32_t>
+       <td>262144
+       <td>6.89E+02
+       <td>8.70E+02
+       <td>0.79
+      <tr>
+       <td>std::vector&lt;uint64_t>
+       <td>1
+       <td>2.01E+00
+       <td>2.51E+00
+       <td>0.80
+      <tr>
+       <td>std::vector&lt;uint64_t>
+       <td>4
+       <td>6.71E+00
+       <td>7.60E+00
+       <td>0.88
+      <tr>
+       <td>std::vector&lt;uint64_t>
+       <td>16
+       <td>8.27E+00
+       <td>1.40E+01
+       <td>0.59
+      <tr>
+       <td>std::vector&lt;uint64_t>
+       <td>64
+       <td>1.06E+01
+       <td>1.56E+01
+       <td>0.68
+      <tr>
+       <td>std::vector&lt;uint64_t>
+       <td>256
+       <td>2.84E+01
+       <td>3.23E+01
+       <td>0.88
+      <tr>
+       <td>std::vector&lt;uint64_t>
+       <td>1024
+       <td>6.41E+01
+       <td>7.49E+01
+       <td>0.85
+      <tr>
+       <td>std::vector&lt;uint64_t>
+       <td>16384
+       <td>3.42E+02
+       <td>3.64E+02
+       <td>0.94
+      <tr>
+       <td>std::vector&lt;uint64_t>
+       <td>262144
+       <td>8.09E+02
+       <td>9.65E+02
+       <td>0.84
     </table>
    </details>
-   <p>Nearly all graphs show increasing divergence between the original version, implementing classic binary search, and the one using one-sided binary search, consistent with the expectation from the slope change for the most relevant factor of the algorithmic complexity. The notable exception is <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>set</c-><c- o>&lt;</c-><c- n>std</c-><c- o>::</c-><c- n>string</c-><c- o>></c-></code>, where comparisons are much more expensive, and loading string contents from memory has a complex interaction with CPU cache contents, giving the time vs. size curves for both algorithms a less linear aspect than for the other types, with the one-sided binary search algorithm following almost parallel to the classic algorithm, albeit consistently faster. The speedup for the simpler types is satisfyingly close to the <em>2x</em> improvement predicted.</p>
+   <p>All graphs show increasing divergence between the original version, implementing classic binary search, and the one using one-sided binary search, consistent with the expectation from the slope change for the most relevant factor of the algorithmic complexity. The speedup, as it might be expected due to additional constants and memory locality questions, is below the theoretical <em>2x</em> improvement predicted, but for the largest container size it’s always at least <em>1.65x</em> (see the raw data above for more detail, including measurements for <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>vector</c-></code>, which is not part of the scope of this proposal).</p>
    <h2 class="heading settled" data-level="4" id="alternative"><span class="secno">4. </span><span class="content">Alternative: expose one-sided binary search directly</span><a class="self-link" href="#alternative"></a></h2>
    <p>Standard library support for searching over unbounded ranges in 𝒪<em>(log₂N)</em> is an attractive proposition which members of the Std-Proposals mailing list <a href="https://lists.isocpp.org/std-proposals/2024/01/8860.php">were quick to point out</a>. Arthur O’Dwyer suggested, as a concrete example, the potential for searching over generators such as <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>ranges</c-><c- o>::</c-><c- n>iota_view</c-></code> — a new <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>streaming_lower_bound</c-><c- p>()</c-></code> function. Personally, I believe that is a very worthy proposal on its own, but it doesn’t detract from the use of the same algorithm to increase the range of application of the more general <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>lower_bound</c-><c- p>()</c-></code>. In the same context, concerns have been raised about the complexity tradeoffs presented by one-sided binary search: twice the number of comparisons in exchange for a reduction from linear to logarithmic growth in iteration steps, keeping in mind that comparisons are likely to be orders of magnitude more expensive than iterator increments. Thinking of the principles of algorithmic complexity analysis alone, that concern is clearly misplaced. If comparisons are 4 times as expensive as each iterator increment, all we need are twice as many elements for one-sided binary search to beat the classic algorithm, and if comparisons are 1 thousand times more expensive, as little as 10 times as many elements would be enough to compensate for the difference. The fact that memory availability has historically outpaced processing power (<a data-link-type="biblio" href="#biblio-mccallum" title="Memory Prices 1957+">[McCallum]</a>, <a data-link-type="biblio" href="#biblio-rupp" title="Microprocessor Trend Data">[Rupp]</a>) gives creedence to this reasoning. Benchmark results presented in the previous section provide experimental confirmation that the lower-order terms relating input size to processing time are not large enough, in practice, to invalidate these conclusions.</p>
    <h2 class="heading settled" data-level="5" id="proposed-wording"><span class="secno">5. </span><span class="content">Proposed wording</span><a class="self-link" href="#proposed-wording"></a></h2>
