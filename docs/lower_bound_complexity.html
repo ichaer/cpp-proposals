@@ -1563,7 +1563,7 @@ Possible extra rowspan handling
   </style>
   <meta content="Bikeshed version 4416b18d5, updated Tue Jan 2 15:52:39 2024 -0800" name="generator">
   <link href="https://isocpp.org/favicon.ico" rel="icon">
-  <meta content="28250a6fd19ebc9ee0540dd29c3d31b0df0b394a" name="revision">
+  <meta content="2b07606ab2599ae7b24906f435b3d812e305422a" name="revision">
 <style>/* Boilerplate: style-autolinks */
 .css.css, .property.property, .descriptor.descriptor {
     color: var(--a-normal-text);
@@ -2980,19 +2980,23 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
       <p><em>Returns:</em> The furthermost iterator <code class="highlight"><c- n>i</c-></code> in the range [<code class="highlight"><c- n>first</c-></code>, <code class="highlight"><c- n>last</c-></code>] such that for every iterator <code class="highlight"><c- n>j</c-></code> in the range [<code class="highlight"><c- n>first</c-></code>, <code class="highlight"><c- n>i</c-></code>], <code class="highlight"><c- b>bool</c-><c- p>(</c-><c- n>invoke</c-><c- p>(</c-><c- n>comp</c-><c- p>,</c-> <c- n>invoke</c-><c- p>(</c-><c- n>proj</c-><c- p>,</c-> <c- o>*</c-><c- n>j</c-><c- p>),</c-> <c- n>value</c-><c- p>))</c-></code> is <code class="highlight">true</code>.</p>
      <li data-md>
       <p>
-       <em>Complexity</em>: At most log₂(last - first) + 𝒪(1) comparisons and projections
-       <ins> if:</ins>
+       <em>Complexity</em>: 
+       <ins>𝒪(last - first) iterator mutations. If:</ins>
       </p>
       <ins>
        <ul>
         <li data-md>
-         <p><code class="highlight"><c- n>ForwardIterator</c-></code> meets the <em>Cpp17RandomAccessIterator</em> requirements for the overloads directly in namespace <code class="highlight"><c- n>std</c-></code>,</p>
+         <p><code class="highlight"><c- n>ForwardIterator</c-></code> meets the <em>Cpp17RandomAccessIterator</em> requirements for the overloads in namespace <code class="highlight"><c- n>std</c-></code>;</p>
         <li data-md>
-         <p><code class="highlight"><c- n>S</c-></code> models <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>sized_sentinel_for</c-></code> its iterator for the overloads in namespace <code class="highlight"><c- n>ranges</c-></code>.</p>
+         <p><code class="highlight"><c- n>S</c-></code> models <code class="highlight"><c- n>sized_sentinel_for</c-></code> its iterator for the overloads in namespace <code class="highlight"><c- n>ranges</c-></code>;</p>
+        <li data-md>
+         <p><code class="highlight"><c- n>R</c-></code> models <code class="highlight"><c- n>sized_range</c-></code> for the second overload in namespace <code class="highlight"><c- n>ranges</c-></code>;</p>
        </ul>
-       Otherwise, 𝒪(log₂(last - first)) comparisons and projections and 𝒪(last - first) iterator mutations
+       then at
       </ins>
-      . 
+      <del>At</del>
+       most log₂(last - first) + 𝒪(1) comparisons and projections. 
+      <ins>Otherwise, 𝒪(log₂(last - first)) comparisons and projections.</ins>
     </ol>
    </blockquote>
    <h2 class="heading settled" data-level="6" id="future-work"><span class="secno">6. </span><span class="content">Future work</span><a class="self-link" href="#future-work"></a></h2>

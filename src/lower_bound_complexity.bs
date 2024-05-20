@@ -348,11 +348,13 @@ template<std::forward_range R, class Proj = identity,
 
 3. *Returns:* The furthermost iterator `i` in the range [`first`, `last`] such that for every iterator `j` in the range [`first`, `i`], `bool(invoke(comp, invoke(proj, *j), value))` is `true`.
 
-4. *Complexity*: At most log₂(last - first) + 𝒪(1) comparisons and projections<ins> if:</ins>
+4. *Complexity*: <ins>𝒪(last - first) iterator mutations. If:</ins>
         <ins>
-        * `ForwardIterator` meets the *Cpp17RandomAccessIterator* requirements for the overloads directly in namespace `std`,
-        * `S` models `std::sized_sentinel_for` its iterator for the overloads in namespace `ranges`.
-    Otherwise, 𝒪(log₂(last - first)) comparisons and projections and 𝒪(last - first) iterator mutations</ins>.
+        * `ForwardIterator` meets the *Cpp17RandomAccessIterator* requirements for the overloads in namespace `std`;
+        * `S` models `sized_sentinel_for` its iterator for the overloads in namespace `ranges`;
+        * `R` models `sized_range` for the second overload in namespace `ranges`;
+    then at</ins><del>At</del> most log₂(last - first) + 𝒪(1) comparisons and projections.
+    <ins>Otherwise, 𝒪(log₂(last - first)) comparisons and projections.</ins>
 
 </blockquote>
 
